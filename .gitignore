@@ -147,3 +147,9 @@ vite.config.ts.timestamp-*
 
 # Turbo Repo
 .turbo
+.env
+.env*
+!.env.example
+node_modules
+.next/
+*.log
