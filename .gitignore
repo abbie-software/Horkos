@@ -153,3 +153,18 @@ vite.config.ts.timestamp-*
 node_modules
 .next/
 *.log
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+*.db
+*.sqlite3
+
+# General
+.DS_Store
