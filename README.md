@@ -179,7 +179,7 @@ We built the PayPal integration with the APIMatic Context Plugin for PayPal insi
 - TODO: add 2 to 4 concrete examples from your evidence log (for example "it generated the correct request for X on the first try" or "it caught a wrong field name before we ran it").
 - TODO: add what you would have done without it (for example time spent reading docs).
 
-**Evidence:** TODO: add screenshots or link to the `docs/apimatic-log.md` file.
+**Evidence:** `docs/apimatic-log.md` file.
 
 ---
 
