@@ -172,7 +172,7 @@ The AI never touches credentials or money directly. It asks, and the backend dec
 
 ## How we used APIMatic
 
-We built the PayPal integration with the **APIMatic Context Plugin for PayPal** inside Claude Code. The plugin gives the coding agent accurate, up-to-date knowledge of PayPal's APIs and SDKs, so the code it writes is based on the real API instead of guesses.
+We built the PayPal integration with the APIMatic Context Plugin for PayPal inside VS Code, using GitHub Copilot’s agent mode. The plugin gives the coding agent accurate, up-to-date knowledge of PayPal's APIs and SDKs, so the code it writes is based on the real API instead of guesses.
 
 **What it helped with:**
 
