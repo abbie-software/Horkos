@@ -383,6 +383,8 @@ We want to be upfront about what Horkos is and is not.
 | ABIGAIL GATHONI | Frontend and design |
 | LEVIS NGANGA | Backend, payments and AI |
 
+see `contributing.md` for how we work
+
 ## Acknowledgements
 
 Thanks to **PayPal Developer** and **APIMatic** for the hackathon, the webinars and the Context Plugin.
