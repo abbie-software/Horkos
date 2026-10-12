@@ -1,0 +1,2 @@
+paypal @ git+https://github.com/context-plugins/paypal-python-sdk.git@1b72465878f0187f88ef326214e08859d3ab0851
+httpx2>=2.13.1,<3.0.0
