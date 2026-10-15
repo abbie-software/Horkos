@@ -47,7 +47,8 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
       <body className="font-sans antialiased">
-        <AppShell>{children}</AppShell>
+        <AppShell />
+        {children}
       </body>
     </html>
   );
