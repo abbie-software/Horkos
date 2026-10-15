@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Menu, X } from "lucide-react";
 import { navItems } from "@/lib/nav";
-import { mockUser } from "@/lib/mock-data";
+//import { mockUser } from "@/lib/mock-data";
 import ThemeToggle from "./ThemeToggle";
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
@@ -84,10 +84,10 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         <div className="flex items-center justify-between border-t border-white/10 p-4">
           <div className="flex items-center gap-3">
             <div className="flex h-9 w-9 items-center justify-center rounded-full bg-accent text-sm font-semibold text-white">
-              {mockUser.name.charAt(0)}
+              {/* {mockUser.name.charAt(0)} */}
             </div>
             <div className="leading-tight">
-              <p className="text-sm font-medium text-white">{mockUser.name}</p>
+              <p className="text-sm font-medium text-white">{/* {mockUser.name} */}</p>
               <p className="text-xs text-sidebar-muted">Buyer</p>
             </div>
           </div>
