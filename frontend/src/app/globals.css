@@ -1,26 +1,60 @@
 @import "tailwindcss";
 
+/* Dark mode is controlled by a "dark" class on <html> */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ---------- Light mode ---------- */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f7f4ec;
+  --card: #ffffff;
+  --foreground: #0b1224;
+  --muted: #5b6478;
+  --border: #e3ddcc;
+
+  --sidebar: #0b1224;
+  --sidebar-active: #141e38;
+  --sidebar-foreground: #e9e5d8;
+  --sidebar-muted: #8f98ad;
+
+  --accent: #b8893b;
+  --approve: #1f9d6b;
+  --block: #d64550;
+  --ask: #e8a33d;
 }
 
+/* ---------- Dark mode ---------- */
+.dark {
+  --background: #0b1224;
+  --card: #141e38;
+  --foreground: #f7f4ec;
+  --muted: #9aa3b8;
+  --border: #263459;
+
+  --sidebar: #070c1a;
+}
+
+/* Makes the colours and fonts available as Tailwind classes */
 @theme inline {
   --color-background: var(--background);
+  --color-card: var(--card);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+  --color-muted: var(--muted);
+  --color-border: var(--border);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-active: var(--sidebar-active);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-muted: var(--sidebar-muted);
+  --color-accent: var(--accent);
+  --color-approve: var(--approve);
+  --color-block: var(--block);
+  --color-ask: var(--ask);
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --font-sans: var(--font-inter);
+  --font-serif: var(--font-source-serif);
+  --font-mono: var(--font-jetbrains-mono);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
 }
