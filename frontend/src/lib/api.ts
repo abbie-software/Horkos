@@ -1,0 +1,213 @@
+// One place for every call to the backend.
+// With NEXT_PUBLIC_USE_MOCKS=true (the default) it returns fake data, so you can
+// build every screen without waiting for the server. Set it to "false" to go live.
+
+import {
+  mockAudit,
+  mockEvents,
+  mockJob,
+  mockOath,
+  mockPayments,
+  mockSellers,
+  mockUser,
+} from "./mock-data";
+import type {
+  ApiError,
+  AttackResponse,
+  AttackType,
+  AuditEntry,
+  CreateJobResponse,
+  HorkosEvent,
+  ListResponse,
+  LoginResponse,
+  Oath,
+  Payment,
+  Seller,
+  SubmissionResponse,
+} from "./types";
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+export const USE_MOCKS = process.env.NEXT_PUBLIC_USE_MOCKS !== "false";
+
+let token: string | null = null;
+export function setToken(value: string | null) {
+  token = value;
+}
+
+const wait = (ms = 300) => new Promise((resolve) => setTimeout(resolve, ms));
+
+export function formatUSD(cents: number): string {
+  return (cents / 100).toLocaleString("en-US", { style: "currency", currency: "USD" });
+}
+
+async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
+  const res = await fetch(`${API_URL}${path}`, {
+    ...init,
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...init.headers,
+    },
+  });
+  if (!res.ok) {
+    let message = `Request failed (${res.status})`;
+    try {
+      const body = (await res.json()) as ApiError;
+      if (body?.error?.message) message = body.error.message;
+    } catch {
+      // keep the default message
+    }
+    throw new Error(message);
+  }
+  if (res.status === 204) return undefined as T;
+  return (await res.json()) as T;
+}
+
+// ---------- Auth ----------
+export async function login(email: string, password: string): Promise<LoginResponse> {
+  if (USE_MOCKS) {
+    await wait();
+    return { access_token: "mock-token", token_type: "bearer", user: mockUser };
+  }
+  const result = await request<LoginResponse>("/auth/login", {
+    method: "POST",
+    body: JSON.stringify({ email, password }),
+  });
+  setToken(result.access_token);
+  return result;
+}
+
+// ---------- Oath ----------
+export async function getOath(): Promise<Oath> {
+  if (USE_MOCKS) {
+    await wait();
+    return mockOath;
+  }
+  return request<Oath>("/oath");
+}
+
+export async function saveOath(rawText: string): Promise<Oath> {
+  if (USE_MOCKS) {
+    await wait(600);
+    return { ...mockOath, raw_text: rawText, updated_at: new Date().toISOString() };
+  }
+  return request<Oath>("/oath", { method: "PUT", body: JSON.stringify({ raw_text: rawText }) });
+}
+
+// ---------- Jobs and payments ----------
+export async function createJob(requestText: string, sellerId?: string): Promise<CreateJobResponse> {
+  if (USE_MOCKS) {
+    await wait(800);
+    return {
+      job: { ...mockJob, request_text: requestText, seller_id: sellerId ?? mockJob.seller_id },
+      payment: mockPayments[2],
+    };
+  }
+  return request<CreateJobResponse>("/jobs", {
+    method: "POST",
+    body: JSON.stringify({ request_text: requestText, seller_id: sellerId }),
+  });
+}
+
+export async function getPayments(): Promise<ListResponse<Payment>> {
+  if (USE_MOCKS) {
+    await wait();
+    return { items: mockPayments, total: mockPayments.length };
+  }
+  return request<ListResponse<Payment>>("/payments");
+}
+
+export async function getPayment(id: string): Promise<Payment> {
+  if (USE_MOCKS) {
+    await wait();
+    const found = mockPayments.find((p) => p.id === id);
+    if (!found) throw new Error("Payment not found");
+    return found;
+  }
+  return request<Payment>(`/payments/${id}`);
+}
+
+export async function decidePayment(id: string, decision: "approve" | "reject"): Promise<Payment> {
+  if (USE_MOCKS) {
+    await wait(500);
+    const found = mockPayments.find((p) => p.id === id);
+    if (!found) throw new Error("Payment not found");
+    return { ...found, status: decision === "approve" ? "approved" : "blocked" };
+  }
+  return request<Payment>(`/payments/${id}/decision`, {
+    method: "POST",
+    body: JSON.stringify({ decision }),
+  });
+}
+
+export async function submitWork(jobId: string, sellerId: string, content: string): Promise<SubmissionResponse> {
+  if (USE_MOCKS) {
+    await wait(500);
+    return { submission_id: "sub_demo", status: "verifying", payment_id: "pay_1002" };
+  }
+  return request<SubmissionResponse>(`/jobs/${jobId}/submission`, {
+    method: "POST",
+    body: JSON.stringify({ seller_id: sellerId, content }),
+  });
+}
+
+// ---------- Trust Board and Audit Trail ----------
+export async function getSellers(): Promise<ListResponse<Seller>> {
+  if (USE_MOCKS) {
+    await wait();
+    return { items: mockSellers, total: mockSellers.length };
+  }
+  return request<ListResponse<Seller>>("/sellers");
+}
+
+export async function getAudit(paymentId?: string): Promise<ListResponse<AuditEntry>> {
+  if (USE_MOCKS) {
+    await wait();
+    const items = paymentId ? mockAudit.filter((a) => a.payment_id === paymentId) : mockAudit;
+    return { items, total: items.length };
+  }
+  const query = paymentId ? `?payment_id=${encodeURIComponent(paymentId)}` : "";
+  return request<ListResponse<AuditEntry>>(`/audit${query}`);
+}
+
+// ---------- Demo controls ----------
+export async function triggerAttack(type: AttackType): Promise<AttackResponse> {
+  if (USE_MOCKS) {
+    await wait(400);
+    return { attack_id: "atk_demo", type, status: "started" };
+  }
+  return request<AttackResponse>(`/demo/attack/${type}`, { method: "POST" });
+}
+
+export async function resetDemo(): Promise<void> {
+  if (USE_MOCKS) {
+    await wait(400);
+    return;
+  }
+  await request<void>("/demo/reset", { method: "POST" });
+}
+
+// ---------- Live Feed ----------
+// Call this inside useEffect and return the result as the cleanup function.
+// Real mode: Server-Sent Events. Mock mode: replays fake events every 2.5 seconds.
+export function subscribeToEvents(onEvent: (event: HorkosEvent) => void): () => void {
+  if (USE_MOCKS) {
+    let index = 0;
+    const timer = setInterval(() => {
+      const base = mockEvents[index % mockEvents.length];
+      onEvent({ ...base, id: `${base.id}_${index}`, at: new Date().toISOString() });
+      index += 1;
+    }, 2500);
+    return () => clearInterval(timer);
+  }
+  // EventSource cannot send headers, so the token goes in the query string.
+  const source = new EventSource(`${API_URL}/events?token=${encodeURIComponent(token ?? "")}`);
+  source.onmessage = (message) => {
+    try {
+      onEvent(JSON.parse(message.data) as HorkosEvent);
+    } catch {
+      // ignore malformed events
+    }
+  };
+  return () => source.close();
+}
