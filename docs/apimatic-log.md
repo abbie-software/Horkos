@@ -64,9 +64,25 @@ Still to do: run it against the sandbox and record whether it returned an order 
 - Prompt: asked the agent to load python-getting-started, python-calling-endpoints and python-error-handling, then show an AUTHORIZE order with correct error handling.
 - VS Code did not register the plugin's skills in the session (the agent said so), so it read the same skill files from GitHub and checked the SDK source.
 - Result: it corrected the first example. The SDK raises on non-2xx responses, so the `is_success()` / `else` branch is wrong; catch `ErrorException`/`ApiException` and read `response_code`. It also added `paypal_request_id` for safe retries and separate handling for timeouts.
-- Caveat: not yet run against the PayPal sandbox.
+“Agent output from before the plugin’s skills were loadable in this session. Not shown to come from the plugin; not yet run.”
 
 ## Evidence 3: skill-specific details (2026-10-10)
 - Prompt: how to check whether an optional response field was returned, and where to read the HTTP status on failure.
 - Answer matched the skills: omitted optionals are absent (use `hasattr`, not `is None`); status code on `exc.response_code` for errors and `response.status_code` for successes.
 - Caveat: the agent also had access to the SDK source, so this shows consistency with the skills, not proof they were the source. On/off comparison not yet run.
+
+“Agent output from before the plugin’s skills were loadable in this session. Not shown to come from the plugin; not yet run.”
+
+## Setup note
+- Installed on Windows with `npx context-plugins install https://github.com/paypaldev/server-sdk-context-plugin-preview`. The installer cannot detect VS Code under WSL, so the agent session did not see the skills.
+- Fix: copied the plugin's Python skills from `C:\Users\Admin\.context-plugins\vscode\paypal\skills\python` to `~/.copilot/skills`. `/skills` then listed the eight `python-*` skills.
+
+## Evidence 4: plugin skills loaded, code run in the sandbox (2026-10-15)
+- Prompt: "Using the PayPal plugin, write Python code that creates an order with the AUTHORIZE intent, authorizes it, and then voids the authorization."
+- The agent loaded six skills: python-getting-started, python-client-initialization, python-authentication, python-calling-endpoints, python-models, python-error-handling. It also read SDK source on GitHub, so the skills were not its only input.
+- Differences from Evidence 1: optional fields read with `getattr` (absent, not `None`), errors caught as `ApiException` with `response_code`, and the wrong `is_success()` check dropped.
+- Run: paypal-server-sdk 2.4.0, Python 3.12, sandbox. First attempt returned 422 `ORDER_NOT_APPROVED` because Enter was pressed before the buyer approved. The error was caught and reported with its HTTP status. Second attempt: create, approve, authorize, void completed with "Authorization voided (HTTP 200)".
+- Caveat: no comparison run with the skills disabled.
+![Agent loads the PayPal python skills](screenshots/04-skills-loaded.png)
+
+![Sandbox run: authorization voided](screenshots/05-sandbox-run.png)
