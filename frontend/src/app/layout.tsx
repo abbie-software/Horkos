@@ -17,6 +17,9 @@ export const metadata: Metadata = {
   title: "Horkos",
   description:
     "An AI guard that enforces your spending rules and holds payments until work is proven.",
+  icons: {
+    icon: "/horkos%20logo.jpg",
+  },
 };
 
 // Runs before the page paints, so there is no light/dark flash
