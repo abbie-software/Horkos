@@ -104,7 +104,7 @@ export default function PolicySummary({
                   <Icon size={17} />
                 </span>
                 <div className="min-w-0">
-                  <p className="text-sm font-semibold capitalize-first">
+                  <p className="text-sm font-semibold">
                     {row.title}
                   </p>
                   <p className="text-xs text-muted sm:text-sm">{row.text}</p>
