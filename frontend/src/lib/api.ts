@@ -179,9 +179,18 @@ export async function triggerAttack(type: AttackType): Promise<AttackResponse> {
   return request<AttackResponse>(`/demo/attack/${type}`, { method: "POST" });
 }
 
+// Remembers where the fake story is, so every event id stays unique
+let mockEventCursor = 0;
+let mockEventSerial = 0;
+
+export function restartMockEvents(): void {
+  mockEventCursor = 0;
+}
+
 export async function resetDemo(): Promise<void> {
   if (USE_MOCKS) {
     await wait(400);
+    mockEventCursor = 0;
     return;
   }
   await request<void>("/demo/reset", { method: "POST" });
@@ -189,19 +198,34 @@ export async function resetDemo(): Promise<void> {
 
 // ---------- Live Feed ----------
 // Call this inside useEffect and return the result as the cleanup function.
-// Real mode: Server-Sent Events. Mock mode: replays fake events every 2.5 seconds.
-export function subscribeToEvents(onEvent: (event: HorkosEvent) => void): () => void {
+// Real mode: Server-Sent Events (runs until you leave the page).
+// Mock mode: plays the 8-event story once, then stops and calls onEnd.
+export function subscribeToEvents(
+  onEvent: (event: HorkosEvent) => void,
+  onEnd?: () => void
+): () => void {
   if (USE_MOCKS) {
-    let index = 0;
     const timer = setInterval(() => {
-      const base = mockEvents[index % mockEvents.length];
-      onEvent({ ...base, id: `${base.id}_${index}`, at: new Date().toISOString() });
-      index += 1;
+      if (mockEventCursor >= mockEvents.length) {
+        clearInterval(timer);
+        onEnd?.();
+        return;
+      }
+      const base = mockEvents[mockEventCursor];
+      mockEventCursor += 1;
+      mockEventSerial += 1;
+      onEvent({
+        ...base,
+        id: `${base.id}_${mockEventSerial}`,
+        at: new Date().toISOString(),
+      });
     }, 2500);
     return () => clearInterval(timer);
   }
   // EventSource cannot send headers, so the token goes in the query string.
-  const source = new EventSource(`${API_URL}/events?token=${encodeURIComponent(token ?? "")}`);
+  const source = new EventSource(
+    `${API_URL}/events?token=${encodeURIComponent(token ?? "")}`
+  );
   source.onmessage = (message) => {
     try {
       onEvent(JSON.parse(message.data) as HorkosEvent);
