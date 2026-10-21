@@ -84,7 +84,7 @@ export default function AuditRow({
                 <dt className="text-[11px] font-semibold uppercase tracking-wider text-muted">
                   {label}
                 </dt>
-                <dd className="mt-0.5 break-words text-sm font-medium capitalize-none">
+                <dd className="mt-0.5 break-words text-sm font-medium ">
                   {value}
                 </dd>
               </div>
