@@ -116,3 +116,34 @@ def test_amount_must_be_positive_whole_cents(db, bad_amount):
 
 def test_every_state_has_a_rule():
     assert set(ALLOWED_TRANSITIONS) == set(S)
+
+def test_ask_then_the_user_approves(db):
+    payment = new_payment(db)
+    walk(db, payment, [S.AWAITING_USER, S.APPROVED, S.HELD])
+    assert payment.state == S.HELD
+    assert [to for _, to in events_of(db, payment)] == [
+        "proposed", "awaiting_user", "approved", "held",
+    ]
+
+
+def test_ask_then_the_user_rejects(db):
+    payment = new_payment(db)
+    walk(db, payment, [S.AWAITING_USER, S.BLOCKED])
+    assert payment.state == S.BLOCKED
+
+
+def test_a_waiting_payment_cannot_skip_the_user_decision(db):
+    payment = new_payment(db)
+    walk(db, payment, [S.AWAITING_USER])
+    for target in (S.HELD, S.VERIFIED, S.RELEASED, S.REFUNDED):
+        with pytest.raises(InvalidTransition):
+            transition(db, payment, target, "skipping the user's decision")
+    assert payment.state == S.AWAITING_USER
+
+
+def test_an_approved_payment_can_only_move_to_held(db):
+    payment = new_payment(db)
+    walk(db, payment, [S.APPROVED])
+    with pytest.raises(InvalidTransition):
+        transition(db, payment, S.BLOCKED, "the contract allows only approved to held")
+    assert payment.state == S.APPROVED

@@ -14,6 +14,7 @@ def utcnow() -> datetime:
 
 class PaymentState(str, Enum):
     PROPOSED = "proposed"
+    AWAITING_USER = "awaiting_user"
     APPROVED = "approved"
     HELD = "held"
     VERIFIED = "verified"
@@ -61,8 +62,10 @@ class Payment(Base):
     amount_cents: Mapped[int] = mapped_column(Integer)
     description: Mapped[str] = mapped_column(Text)
     state: Mapped[PaymentState] = mapped_column(
-        SAEnum(PaymentState), default=PaymentState.PROPOSED
+        SAEnum(PaymentState, native_enum=False, length=20),
+        default=PaymentState.PROPOSED,
     )
+    
     paypal_order_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
     paypal_authorization_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
