@@ -2,6 +2,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
+from app.errors import install_error_handlers
+from app.routes import oath
 
 app = FastAPI(title="Horkos")
 
@@ -11,6 +13,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+install_error_handlers(app)
+app.include_router(oath.router)
 
 
 @app.get("/health")
