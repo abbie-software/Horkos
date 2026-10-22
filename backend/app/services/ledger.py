@@ -5,8 +5,9 @@ from app.models import Payment, PaymentEvent, PaymentState
 S = PaymentState
 
 ALLOWED_TRANSITIONS: dict[PaymentState, set[PaymentState]] = {
-    S.PROPOSED: {S.APPROVED, S.BLOCKED},
-    S.APPROVED: {S.HELD, S.BLOCKED},
+    S.PROPOSED: {S.APPROVED, S.AWAITING_USER, S.BLOCKED},
+    S.AWAITING_USER: {S.APPROVED, S.BLOCKED},
+    S.APPROVED: {S.HELD},
     S.HELD: {S.VERIFIED, S.REFUNDED},
     S.VERIFIED: {S.RELEASED},
     S.RELEASED: set(),
