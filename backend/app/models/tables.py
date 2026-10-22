@@ -46,10 +46,28 @@ class Seller(Base):
     __tablename__ = "sellers"
 
     id: Mapped[int] = mapped_column(primary_key=True)
+    # The ID the API shows, for example "sel_nova". Seeded sellers have one.
+    slug: Mapped[str | None] = mapped_column(String(40), unique=True, index=True)
     name: Mapped[str] = mapped_column(String(120))
     paypal_email: Mapped[str] = mapped_column(String(255))
     trust_score: Mapped[int] = mapped_column(Integer, default=0)
     limit_cents: Mapped[int] = mapped_column(Integer, default=1000)
+    jobs_completed: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
+    jobs_failed: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
+    last_activity_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class Job(Base):
+    __tablename__ = "jobs"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    seller_id: Mapped[int] = mapped_column(ForeignKey("sellers.id"), index=True)
+    request_text: Mapped[str] = mapped_column(Text)
+    category: Mapped[str] = mapped_column(String(40))
+    status: Mapped[str] = mapped_column(String(20), default="open")
+    acceptance_tests_json: Mapped[str] = mapped_column(Text, default="[]")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
 
@@ -59,15 +77,19 @@ class Payment(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
     seller_id: Mapped[int] = mapped_column(ForeignKey("sellers.id"), index=True)
+    job_id: Mapped[int | None] = mapped_column(Integer, index=True)
     amount_cents: Mapped[int] = mapped_column(Integer)
     description: Mapped[str] = mapped_column(Text)
     state: Mapped[PaymentState] = mapped_column(
         SAEnum(PaymentState, native_enum=False, length=20),
         default=PaymentState.PROPOSED,
     )
-    
+    # The Guard's decision, stored exactly as the API returns it.
+    decision_json: Mapped[str | None] = mapped_column(Text)
     paypal_order_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
     paypal_authorization_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    payout_ref: Mapped[str | None] = mapped_column(String(64))
+    refund_ref: Mapped[str | None] = mapped_column(String(64))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=utcnow, onupdate=utcnow
@@ -83,3 +105,4 @@ class PaymentEvent(Base):
     to_state: Mapped[str] = mapped_column(String(20))
     reason: Mapped[str] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    

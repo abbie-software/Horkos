@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
 from app.errors import install_error_handlers
-from app.routes import oath
+from app.routes import oath, payments, sellers
 
 app = FastAPI(title="Horkos")
 
@@ -16,6 +16,8 @@ app.add_middleware(
 
 install_error_handlers(app)
 app.include_router(oath.router)
+app.include_router(sellers.router)
+app.include_router(payments.router)
 
 
 @app.get("/health")
