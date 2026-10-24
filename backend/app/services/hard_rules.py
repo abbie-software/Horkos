@@ -24,6 +24,7 @@ class Proposal:
     amount_cents: int
     category: str
     recipient_email: str  # the PayPal account the money would go to
+    description: str = ""  # what the payment buys, in a sentence
 
 
 @dataclass(frozen=True)

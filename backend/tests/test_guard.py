@@ -4,6 +4,7 @@ from app.services.guard import (
     decide,
     failsafe_decision,
     join_reasons,
+    review_payment,
     safe_review,
 )
 from app.services.hard_rules import Proposal, SellerFacts
@@ -184,3 +185,22 @@ def test_decide_is_usable_on_its_own():
         IntentResult(mismatch=False),
     )
     assert decision.verdict == "approve"
+
+class RecordingChecker(FakeChecker):
+    def check(self, request_text, payment_summary):
+        self.summary = payment_summary
+        return super().check(request_text, payment_summary)
+
+
+def test_the_auditor_is_told_what_the_payment_buys():
+    checker = RecordingChecker()
+    proposal = Proposal(
+        amount_cents=2000,
+        category="coding",
+        recipient_email=NOVA.agreed_email,
+        description="A CSV to JSON function",
+    )
+    review_payment(proposal, NOVA, POLICY, "Write a function.", Activity(), checker)
+    assert checker.summary == (
+        "Pay $20.00 to Nova Scripts for: A CSV to JSON function (category: coding)."
+    )

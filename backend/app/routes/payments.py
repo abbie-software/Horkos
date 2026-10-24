@@ -5,16 +5,20 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.deps import get_current_user
+from app.deps import get_current_user, get_funder
 from app.errors import ApiError
 from app.models import Payment, PaymentState, User
+from app.schemas.jobs import DecisionIn
 from app.schemas.payments import PaymentList, PaymentOut, PaymentStatus
+from app.services.funding import Funder
+from app.services.jobs import decide_payment
 from app.services.views import load_payment_out
 
 router = APIRouter(tags=["payments"])
 
 DbSession = Annotated[Session, Depends(get_db)]
 CurrentUser = Annotated[User, Depends(get_current_user)]
+FunderDep = Annotated[Funder, Depends(get_funder)]
 
 
 def parse_payment_id(public_id: str) -> int | None:
@@ -23,6 +27,14 @@ def parse_payment_id(public_id: str) -> int | None:
     if prefix != "pay" or not number.isdigit():
         return None
     return int(number)
+
+
+def find_payment(db: Session, user: User, public_id: str) -> Payment:
+    number = parse_payment_id(public_id)
+    payment = db.get(Payment, number) if number is not None else None
+    if payment is None or payment.user_id != user.id:
+        raise ApiError(404, "not_found", "Payment not found.")
+    return payment
 
 
 @router.get("/payments", response_model=PaymentList)
@@ -42,8 +54,18 @@ def list_payments(
 
 @router.get("/payments/{payment_id}", response_model=PaymentOut)
 def read_payment(payment_id: str, db: DbSession, user: CurrentUser):
-    number = parse_payment_id(payment_id)
-    payment = db.get(Payment, number) if number is not None else None
-    if payment is None or payment.user_id != user.id:
-        raise ApiError(404, "not_found", "Payment not found.")
+    return load_payment_out(db, find_payment(db, user, payment_id))
+
+
+@router.post("/payments/{payment_id}/decision", response_model=PaymentOut)
+def decide(
+    payment_id: str,
+    body: DecisionIn,
+    db: DbSession,
+    user: CurrentUser,
+    funder: FunderDep,
+):
+    payment = find_payment(db, user, payment_id)
+    decide_payment(db, payment, body.decision, funder)
+    db.commit()
     return load_payment_out(db, payment)

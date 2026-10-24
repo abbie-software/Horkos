@@ -27,6 +27,8 @@ def create_payment(
     seller_id: int,
     amount_cents: int,
     description: str,
+    job_id: int | None = None,
+    reason: str = "Payment proposed",
 ) -> Payment:
     if (
         not isinstance(amount_cents, int)
@@ -38,6 +40,7 @@ def create_payment(
     payment = Payment(
         user_id=user_id,
         seller_id=seller_id,
+        job_id=job_id,
         amount_cents=amount_cents,
         description=description,
         state=S.PROPOSED,
@@ -49,7 +52,7 @@ def create_payment(
             payment_id=payment.id,
             from_state=None,
             to_state=S.PROPOSED.value,
-            reason="Payment proposed",
+            reason=reason,
         )
     )
     db.flush()
