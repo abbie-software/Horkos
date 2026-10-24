@@ -137,10 +137,17 @@ def review_payment(
     if rule is not None:
         return hard_rule_decision(rule)
 
-    summary = (
-        f"Pay {dollars(proposal.amount_cents)} to {seller.name} "
-        f"for a {proposal.category} job."
-    )
+    if proposal.description:
+        summary = (
+            f"Pay {dollars(proposal.amount_cents)} to {seller.name} for: "
+            f"{proposal.description} (category: {proposal.category})."
+        )
+    else:
+        summary = (
+            f"Pay {dollars(proposal.amount_cents)} to {seller.name} "
+            f"for a {proposal.category} job."
+        )
+
     intent = checker.check(request_text, summary)
     signals = assess_signals(proposal, seller, policy, request_text, activity, intent)
     return decide(proposal, seller, policy, signals, intent)

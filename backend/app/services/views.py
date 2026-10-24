@@ -1,7 +1,10 @@
+import json
+
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.models import Payment, PaymentEvent, Seller
+from app.models import Job, Payment, PaymentEvent, Seller
+from app.schemas.jobs import JobOut
 from app.schemas.payments import (
     SIGNAL_CODES,
     DecisionOut,
@@ -87,3 +90,15 @@ def load_payment_out(db: Session, payment: Payment) -> PaymentOut:
         .order_by(PaymentEvent.id)
     ).all()
     return payment_to_out(payment, seller, list(events))
+
+def job_to_out(job: Job, seller: Seller, payment_id: int | None) -> JobOut:
+    return JobOut(
+        id=f"job_{job.id}",
+        request_text=job.request_text,
+        category=job.category,
+        status=job.status,
+        seller_id=seller_public_id(seller),
+        payment_id=f"pay_{payment_id}" if payment_id else None,
+        acceptance_tests=json.loads(job.acceptance_tests_json),
+        created_at=as_utc(job.created_at),
+    )

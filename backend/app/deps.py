@@ -7,6 +7,9 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.errors import ApiError
 from app.models import User
+from app.services.buyer_agent import GeminiBuyerAgent
+from app.services.funding import SimulatedFunder
+from app.services.intent import GeminiIntentChecker
 
 DEMO_EMAIL = "amara@example.com"
 
@@ -24,3 +27,15 @@ def get_current_user(db: Annotated[Session, Depends(get_db)]) -> User:
             "Demo user not found. Run: python -m app.scripts.seed",
         )
     return user
+
+
+def get_buyer_agent() -> GeminiBuyerAgent:
+    return GeminiBuyerAgent()
+
+
+def get_intent_checker() -> GeminiIntentChecker:
+    return GeminiIntentChecker()
+
+
+def get_funder() -> SimulatedFunder:
+    return SimulatedFunder()
