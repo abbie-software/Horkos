@@ -7,8 +7,9 @@ class Settings(BaseSettings):
     paypal_client_id: str = ""
     paypal_client_secret: str = ""
     paypal_environment: str = "sandbox"
-    openai_api_key: str = ""
-    openai_model: str = ""
+    gemini_api_key: str = ""
+    gemini_model: str = "gemini-3.5-flash-lite"
+    gemini_thinking_level: str = ""  # optional: low, medium or high, if the model accepts it
     database_url: str = "sqlite:///./horkos.db"
     jwt_secret: str = ""
     frontend_origin: str = "http://localhost:3000"

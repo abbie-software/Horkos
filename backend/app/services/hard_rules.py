@@ -35,6 +35,8 @@ class SellerFacts:
     trust_score: int
     jobs_failed: int = 0
     blocklisted: bool = False
+    limit_cents: int = 0  # the seller's current trust-based limit
+    jobs_completed: int = 0
 
 
 @dataclass(frozen=True)
