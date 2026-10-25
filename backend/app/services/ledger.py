@@ -5,8 +5,9 @@ from app.models import Payment, PaymentEvent, PaymentState
 S = PaymentState
 
 ALLOWED_TRANSITIONS: dict[PaymentState, set[PaymentState]] = {
-    S.PROPOSED: {S.APPROVED, S.BLOCKED},
-    S.APPROVED: {S.HELD, S.BLOCKED},
+    S.PROPOSED: {S.APPROVED, S.AWAITING_USER, S.BLOCKED},
+    S.AWAITING_USER: {S.APPROVED, S.BLOCKED},
+    S.APPROVED: {S.HELD},
     S.HELD: {S.VERIFIED, S.REFUNDED},
     S.VERIFIED: {S.RELEASED},
     S.RELEASED: set(),
@@ -26,6 +27,8 @@ def create_payment(
     seller_id: int,
     amount_cents: int,
     description: str,
+    job_id: int | None = None,
+    reason: str = "Payment proposed",
 ) -> Payment:
     if (
         not isinstance(amount_cents, int)
@@ -37,6 +40,7 @@ def create_payment(
     payment = Payment(
         user_id=user_id,
         seller_id=seller_id,
+        job_id=job_id,
         amount_cents=amount_cents,
         description=description,
         state=S.PROPOSED,
@@ -48,7 +52,7 @@ def create_payment(
             payment_id=payment.id,
             from_state=None,
             to_state=S.PROPOSED.value,
-            reason="Payment proposed",
+            reason=reason,
         )
     )
     db.flush()
