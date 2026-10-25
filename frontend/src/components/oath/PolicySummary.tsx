@@ -67,9 +67,11 @@ function buildRows(policy: Policy): Row[] {
 export default function PolicySummary({
   policy,
   dirty,
+  empty = false,
 }: {
   policy: Policy | null;
   dirty: boolean;
+  empty?: boolean;
 }) {
   return (
     <section className="rounded-2xl border border-border bg-card p-4 sm:p-5">
@@ -82,7 +84,11 @@ export default function PolicySummary({
           : "Check that these match what you meant."}
       </p>
 
-      {!policy ? (
+            {empty && !policy ? (
+        <p className="mt-4 rounded-xl bg-foreground/5 p-4 text-sm text-muted">
+          Nothing saved yet. Write your rules and press Save oath.
+        </p>
+      ) : !policy ? (
         <div className="mt-4 space-y-2">
           {[0, 1, 2, 3].map((i) => (
             <div
