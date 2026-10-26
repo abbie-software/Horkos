@@ -40,6 +40,17 @@ export function formatUSD(cents: number): string {
   return (cents / 100).toLocaleString("en-US", { style: "currency", currency: "USD" });
 }
 
+export class ApiRequestError extends Error {
+  status: number;
+  code: string | null;
+  constructor(message: string, status: number, code: string | null = null) {
+    super(message);
+    this.name = "ApiRequestError";
+    this.status = status;
+    this.code = code;
+  }
+}
+
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   const res = await fetch(`${API_URL}${path}`, {
     ...init,
@@ -49,15 +60,17 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
       ...init.headers,
     },
   });
-  if (!res.ok) {
+    if (!res.ok) {
     let message = `Request failed (${res.status})`;
+    let code: string | null = null;
     try {
       const body = (await res.json()) as ApiError;
       if (body?.error?.message) message = body.error.message;
+      if (body?.error?.code) code = body.error.code;
     } catch {
       // keep the default message
     }
-    throw new Error(message);
+    throw new ApiRequestError(message, res.status, code);
   }
   if (res.status === 204) return undefined as T;
   return (await res.json()) as T;

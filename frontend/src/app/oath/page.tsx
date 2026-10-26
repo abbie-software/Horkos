@@ -5,7 +5,7 @@ import { ShieldCheck } from "lucide-react";
 import PageHeader from "@/components/PageHeader";
 import OathEditor from "@/components/oath/OathEditor";
 import PolicySummary from "@/components/oath/PolicySummary";
-import { getOath, saveOath } from "@/lib/api";
+import { ApiRequestError, getOath, saveOath } from "@/lib/api";
 import type { Oath } from "@/lib/types";
 
 function errorText(e: unknown) {
@@ -14,6 +14,7 @@ function errorText(e: unknown) {
 
 export default function OathPage() {
   const [oath, setOath] = useState<Oath | null>(null);
+  const [noOath, setNoOath] = useState(false);
   const [text, setText] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -29,7 +30,12 @@ export default function OathPage() {
         setText(o.raw_text);
       })
       .catch((e) => {
-        if (!cancelled) setError(errorText(e));
+        if (cancelled) return;
+        if (e instanceof ApiRequestError && e.status === 404) {
+          setNoOath(true); // nothing saved yet: start with an empty box
+        } else {
+          setError(errorText(e));
+        }
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -39,7 +45,9 @@ export default function OathPage() {
     };
   }, []);
 
-  const dirty = oath !== null && text.trim() !== oath.raw_text.trim();
+  const dirty = oath
+    ? text.trim() !== oath.raw_text.trim()
+    : text.trim().length > 0;
 
   async function handleSave() {
     setSaving(true);
@@ -48,6 +56,7 @@ export default function OathPage() {
     try {
       const updated = await saveOath(text.trim());
       setOath(updated);
+      setNoOath(false);
       setText(updated.raw_text);
       setNote("Oath saved.");
     } catch (e) {
@@ -58,8 +67,7 @@ export default function OathPage() {
   }
 
   function handleReset() {
-    if (!oath) return;
-    setText(oath.raw_text);
+    setText(oath ? oath.raw_text : "");
     setError(null);
     setNote(null);
   }
@@ -77,7 +85,7 @@ export default function OathPage() {
           loading={loading}
           saving={saving}
           dirty={dirty}
-          note={note}
+          note={note ?? (noOath ? "No oath saved yet" : null)}
           error={error}
           onChange={(value) => {
             setText(value);
@@ -86,7 +94,11 @@ export default function OathPage() {
           onSave={handleSave}
           onReset={handleReset}
         />
-        <PolicySummary policy={oath ? oath.policy : null} dirty={dirty} />
+        <PolicySummary
+          policy={oath ? oath.policy : null}
+          dirty={dirty}
+          empty={noOath}
+        />
       </div>
 
       <div className="mt-6 flex items-start gap-3 rounded-xl border-l-4 border-accent bg-card p-4">
