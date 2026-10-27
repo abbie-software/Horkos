@@ -68,6 +68,21 @@ class Job(Base):
     category: Mapped[str] = mapped_column(String(40))
     status: Mapped[str] = mapped_column(String(20), default="open")
     acceptance_tests_json: Mapped[str] = mapped_column(Text, default="[]")
+    # The agreed tests as Python code. The seller's work is run against these.
+    test_code: Mapped[str | None] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class Submission(Base):
+    __tablename__ = "submissions"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    job_id: Mapped[int] = mapped_column(ForeignKey("jobs.id"), index=True)
+    seller_id: Mapped[int] = mapped_column(ForeignKey("sellers.id"), index=True)
+    content: Mapped[str] = mapped_column(Text)
+    # verifying, passed, failed, timeout or error
+    status: Mapped[str] = mapped_column(String(20), default="verifying")
+    result_json: Mapped[str | None] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
 
@@ -105,4 +120,3 @@ class PaymentEvent(Base):
     to_state: Mapped[str] = mapped_column(String(20))
     reason: Mapped[str] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
-    

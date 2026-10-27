@@ -5,7 +5,17 @@ from app.models.tables import (
     PaymentEvent,
     PaymentState,
     Seller,
+    Submission,
     User,
 )
 
-__all__ = ["Job", "Oath", "Payment", "PaymentEvent", "PaymentState", "Seller", "User"]
+__all__ = [
+    "Job",
+    "Oath",
+    "Payment",
+    "PaymentEvent",
+    "PaymentState",
+    "Seller",
+    "Submission",
+    "User",
+]

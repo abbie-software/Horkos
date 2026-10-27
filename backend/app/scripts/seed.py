@@ -51,7 +51,8 @@ def seed_demo_data(db: Session) -> list[str]:
 
     request_text_by_job = {job["id"]: job["request_text"] for job in JOBS}
     for data in JOBS:
-        if db.get(Job, data["id"]) is None:
+        job = db.get(Job, data["id"])
+        if job is None:
             db.add(
                 Job(
                     id=data["id"],
@@ -61,10 +62,14 @@ def seed_demo_data(db: Session) -> list[str]:
                     category="coding",
                     status=data["status"],
                     acceptance_tests_json=json.dumps(data["tests"]),
+                    test_code=data.get("test_code"),
                     created_at=ts(data["created_at"]),
                 )
             )
             added.append(f"job {data['id']}")
+        elif data.get("test_code") and not job.test_code:
+            job.test_code = data["test_code"]
+            added.append(f"tests for job {data['id']}")
     db.flush()
 
     for data in PAYMENTS:

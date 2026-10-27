@@ -168,6 +168,7 @@ def run_job(
         category=idea.category,
         status="open",
         acceptance_tests_json=json.dumps(idea.acceptance_tests),
+        test_code=idea.test_code,
     )
     db.add(job)
     db.flush()

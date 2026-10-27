@@ -16,6 +16,12 @@ from app.services.funding import SimulatedFunder
 from app.services.signals import IntentResult
 
 REQUEST = "Write a Python function that converts a CSV file into JSON."
+TEST_CODE = (
+    "from solution import double\n"
+    "\n"
+    "def test_doubles_a_number():\n"
+    "    assert double(2) == 4\n"
+)
 ZED_ASK_REASON = (
     "I need your approval: Zed Dev is new with no delivery history, "
     "and $25.00 is above their current limit of $10.00."
@@ -36,6 +42,7 @@ class FakeAgent:
             amount_cents=self.amount_cents,
             description="A small Python function.",
             acceptance_tests=["Works on a simple input", "Handles empty input", "Fails clearly on bad input"],
+            test_code=TEST_CODE,
         )
 
 
@@ -113,6 +120,12 @@ def test_a_clean_job_goes_to_the_most_trusted_seller_and_is_held(world):
     newest = world.client.get("/payments").json()["items"][0]
     assert newest["id"] == "pay_1007"
     assert newest["job_id"] == "job_2007"
+
+
+def test_the_agents_tests_are_saved_with_the_job(world):
+    start_job(world)
+    with Session(world.engine) as db:
+        assert db.get(Job, 2007).test_code == TEST_CODE
 
 
 def test_a_new_seller_above_their_limit_makes_the_guard_ask(world):
