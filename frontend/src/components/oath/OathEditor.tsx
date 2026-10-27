@@ -69,6 +69,10 @@ export default function OathEditor({
           </button>
         ))}
       </div>
+            <p className="mt-3 text-xs text-muted">
+        Work types Horkos understands: coding, writing, design, data and other.
+        Use these words, for example “Only coding work.”
+      </p>
 
       {error && (
         <div

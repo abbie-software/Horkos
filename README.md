@@ -101,18 +101,18 @@ The Guard checks rules in a fixed order. **The first rule that fires decides the
 flowchart TD
     A["Agent proposes a payment"] --> B{"Hard rule broken? Recipient changed, over cap, excluded category, blocklisted"}
     B -- Yes --> X["BLOCK"]
-    B -- No --> C{"Needs a human? Above ask threshold, new seller, medium risk, AI unsure"}
-    C -- Yes --> Q["ASK the user"]
-    C -- No --> D{"High risk score?"}
+    B -- No --> D{"High risk score?"}
     D -- Yes --> X
-    D -- No --> E["APPROVE and hold funds"]
+    D -- No --> C{"Needs a human? Above ask threshold, new seller, medium risk, AI unsure"}
+    C -- Yes --> Q["ASK the user"]
+    C -- No --> E["APPROVE and hold funds"]
 ```
 
 | Step | Outcome | Examples |
 |---|---|---|
 | 1. Hard rules | **Block** (no AI judgment, no exceptions) | Recipient changed mid-job; amount breaks the oath's caps; job category the user excluded; blocklisted seller or trust score below the floor |
-| 2. Needs a human | **Ask** | Amount above the user's "ask me" threshold; brand-new seller; medium risk; the Auditor is unsure or cannot parse the request |
-| 3. High risk | **Block** | Combined risk score from the soft signals is in the high band |
+| 2. High risk | **Block** | Combined risk score from the soft signals is in the high band |
+| 3. Needs a human | **Ask** | Amount above the user's "ask me" threshold;brand-new seller; amount above the seller's current limit; medium risk; the Auditor is unsure or cannot parse the request|
 | 4. All clear | **Approve** | Risk is low and the amount fits within the seller's current trust-based limit |
 
 ### The six risk signals
@@ -149,26 +149,25 @@ The thresholds are placeholders to tune. The structure stays fixed.
 
 ## How we use PayPal
 
-Horkos is built on the **PayPal sandbox**. No real money moves anywhere in this project.
+Horkos is built for the **PayPal sandbox**. No real money moves anywhere in this project.
 
-- **Funding:** a job is funded through the PayPal REST API (sandbox).
-- **Escrow:** while the work is being checked, funds are tracked in Horkos's own ledger (stored as integer cents) so every state change is recorded and auditable.
-- **Release:** when work is verified, the seller is paid out through PayPal.
-- **Refund:** when work fails verification, the buyer is refunded through PayPal.
+- **Escrow:** Horkos tracks the hold in its own ledger (integer cents), so every state change is recorded and auditable.
+- **Simulated in this build:** funding, payouts and refunds are recorded as simulated entries. The app does not call PayPal for them yet.
+- **Tested against PayPal's sandbox:** authorize, capture and void, in a standalone script (a hold was placed, then captured or voided). Seller payouts and real refunds are not tested yet.
 
 
 
 ## How we use AI
 
-Horkos uses the **OpenAI API** in three roles:
+Horkos uses the **Gemini API** for its AI roles. We chose a lite model because the full models were too slow for a live demo.
 
 | Role | What it does |
 |---|---|
-| **Buyer Agent** | Turns a user's request into a concrete payment proposal, using tool calling to ask the backend to act. It can only *propose*; it can never move money itself. |
-| **Auditor** | Reads each proposal against the user's oath and original request, and returns a structured verdict with a risk assessment and a plain-English reason. |
-| **Verifier** | Reviews delivered work for judgment calls that automated tests cannot make. |
+| **Buyer Agent** | Turns a user's request into a payment proposal, plus acceptance tests and a test file. It returns structured JSON that the backend validates. It can only *propose*; it can never move money itself. |
+| **Auditor** | Checks whether the payment buys the kind of work the user asked for, and returns a structured verdict with a plain-English reason. Price is judged by the code's fixed rules, not by the AI. |
+| **Verifier** (planned) | Would review delivered work for judgment calls that automated tests cannot make. Not built yet. Verification today is automatic: the seller's code runs against the tests in a sandbox, with no AI involved. |
 
-The AI never touches credentials or money directly. It asks, and the backend decides and acts, after the hard rules have run.
+The AI never touches credentials or money. The backend validates everything the AI returns, and the hard rules cannot be overridden by it.
 
 ## How we used APIMatic
 
@@ -189,7 +188,7 @@ We built the PayPal integration with the APIMatic Context Plugin for PayPal insi
 flowchart LR
     UI["Next.js + React + TypeScript: Oath, Live Feed, Money Tracker, Trust Board, Audit Trail"] -- "REST" --> API["FastAPI backend"]
     API -- "SSE live feed" --> UI
-    API --> Guard["Guard: policy engine + AI Auditor (OpenAI)"]
+    API --> Guard["Guard: policy engine + AI Auditor (Gemini)"]
     API --> DB[("PostgreSQL: ledger, trust scores, audit log")]
     API --> PP["PayPal sandbox: fund, payout, refund"]
     API --> Runner["Docker test runner: no network, time and memory limits"]
@@ -201,7 +200,7 @@ flowchart LR
 | Backend | Python 3.12, FastAPI, Pydantic, Uvicorn |
 | Data | PostgreSQL (SQLite for local development), SQLAlchemy 2, Alembic |
 | Payments | PayPal REST API (sandbox), internal ledger in integer cents |
-| AI | OpenAI API |
+| AI | Gemini API |
 | Verification | Docker (isolated test runner) |
 | Real-time | Server-Sent Events with sse-starlette |
 | Auth and security | JWT sessions (PyJWT), Pydantic Settings for secrets |
@@ -218,7 +217,7 @@ flowchart LR
 - Node.js 20 or newer
 - Docker (needed for the test runner)
 - A PayPal developer account with a **sandbox** app ([developer.paypal.com](https://developer.paypal.com))
-- An OpenAI API key
+-  A Gemini API key
 
 ### 1. Clone and configure
 
@@ -235,8 +234,9 @@ Open `.env` and fill in your values:
 | `PAYPAL_CLIENT_ID` | Client ID of your PayPal **sandbox** app |
 | `PAYPAL_CLIENT_SECRET` | Secret of your PayPal **sandbox** app |
 | `PAYPAL_ENVIRONMENT` | Keep as `sandbox` |
-| `OPENAI_API_KEY` | Your OpenAI API key |
-| `OPENAI_MODEL` | The OpenAI model to use |
+| `GEMINI_API_KEY` | Your Google AI Studio key, from aistudio.google.com/apikey |
+| `GEMINI_MODEL` | The model name. Default `gemini-3.5-flash-lite` (about 3 to 4 seconds per call in our tests) |
+| `GEMINI_THINKING_LEVEL` | Optional: `low`, `medium` or `high`. Leave empty unless your model accepts it |
 | `DATABASE_URL` | Defaults to a local SQLite file; use a PostgreSQL URL for production |
 | `JWT_SECRET` | Any long random string |
 | `FRONTEND_ORIGIN` | Defaults to `http://localhost:3000` |
@@ -280,7 +280,7 @@ docker pull python:3.12-slim
 
 - The frontend loads at `http://localhost:3000`.
 - `http://localhost:8000/docs` shows the API.
-- The Live Feed screen shows "connected".
+- The Live Feed screen shows "live updates on".
 
 ---
 
@@ -365,6 +365,9 @@ We want to be upfront about what Horkos is and is not.
 - **The demo scenario is narrow.** Verification is demonstrated on coding jobs, where automated tests give an objective pass or fail. Other kinds of work would need other verification methods.
 - **Test code runs in isolation.** Submitted code runs in a Docker container with no network access and with time and memory limits. Isolation like this reduces risk but should be reviewed further before any real-world use.
 - **Thresholds are examples.** Limits, risk bands and trust tiers are tuned for the demo.
+- **The blocklist rule is built but inactive** until blocklist storage is added.
+- **Funding is simulated** until the PayPal pay and refund work is finished.
+- **Seller submissions are not authenticated yet.** There is no separate seller login, so anyone can submit work as any seller in this demo.
 
 ## Roadmap
 
