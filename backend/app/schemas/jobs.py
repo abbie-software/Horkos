@@ -35,3 +35,14 @@ class JobOut(BaseModel):
 class JobCreated(BaseModel):
     job: JobOut
     payment: PaymentOut
+
+
+class SubmissionIn(BaseModel):
+    seller_id: str
+    content: str = Field(min_length=1, max_length=50_000)
+
+
+class SubmissionAccepted(BaseModel):
+    submission_id: str
+    status: Literal["verifying"] = "verifying"
+    payment_id: str

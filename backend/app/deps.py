@@ -4,12 +4,13 @@ from fastapi import Depends
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.database import get_db
+from app.database import SessionLocal, get_db
 from app.errors import ApiError
 from app.models import User
 from app.services.buyer_agent import GeminiBuyerAgent
 from app.services.funding import SimulatedFunder
 from app.services.intent import GeminiIntentChecker
+from app.services.sandbox import run_in_sandbox
 
 DEMO_EMAIL = "amara@example.com"
 
@@ -39,3 +40,11 @@ def get_intent_checker() -> GeminiIntentChecker:
 
 def get_funder() -> SimulatedFunder:
     return SimulatedFunder()
+
+
+def get_session_factory():
+    return SessionLocal
+
+
+def get_runner():
+    return run_in_sandbox

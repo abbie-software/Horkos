@@ -14,6 +14,12 @@ GOOD = {
     "price_cents": 1500,
     "description": "A Python function that converts a CSV file into JSON.",
     "acceptance_tests": ["Converts a simple CSV", "Handles empty fields", "Rejects an empty file"],
+    "test_code": (
+        "from solution import csv_to_json\n"
+        "\n"
+        "def test_converts_a_simple_csv():\n"
+        "    assert csv_to_json('a,b\\n1,2') == '[{\"a\": \"1\", \"b\": \"2\"}]'\n"
+    ),
 }
 
 
@@ -47,6 +53,8 @@ def test_a_good_answer_becomes_a_proposal():
     assert proposal.amount_cents == 1500
     assert proposal.description.startswith("A Python function")
     assert len(proposal.acceptance_tests) == 3
+    assert proposal.test_code.endswith("\n")
+    assert "from solution import csv_to_json" in proposal.test_code
 
 
 def test_the_category_must_be_one_of_the_known_ones():
@@ -107,3 +115,23 @@ def test_the_request_is_sent_as_data_with_the_schema():
 
 def test_the_schema_limits_the_category_choices():
     assert SCHEMA["properties"]["category"]["enum"] == CATEGORIES
+
+
+def test_the_test_code_must_be_a_real_test_file_that_imports_the_solution():
+    assert rejected(test_code="")
+    assert rejected(test_code="def test_x(:\n    pass")  # not valid Python
+    assert rejected(test_code="from solution import f\n\ndef helper():\n    pass")  # no test
+    assert rejected(test_code="def test_x():\n    assert True")  # never imports the work
+    assert rejected(test_code=None)
+    assert rejected(test_code="from solution import f\n" + "# padding\n" * 1000)  # too long
+
+
+def test_importing_the_whole_solution_module_is_fine():
+    proposal = parse_proposal(
+        {**GOOD, "test_code": "import solution\n\ndef test_x():\n    assert solution\n"}
+    )
+    assert proposal.test_code.startswith("import solution")
+
+
+def test_the_schema_asks_for_the_test_code():
+    assert "test_code" in SCHEMA["required"]

@@ -72,6 +72,18 @@ JOBS = [
         "request_text": "Write a Python function that reverses the words in a sentence.",
         "status": "awaiting_work",
         "tests": ["Reverses a simple sentence", "Keeps single words as they are", "Handles an empty string"],
+        "test_code": (
+            "from solution import reverse_words\n"
+            "\n"
+            "def test_reverses_a_simple_sentence():\n"
+            "    assert reverse_words('one two three') == 'three two one'\n"
+            "\n"
+            "def test_keeps_a_single_word():\n"
+            "    assert reverse_words('hello') == 'hello'\n"
+            "\n"
+            "def test_handles_an_empty_string():\n"
+            "    assert reverse_words('') == ''\n"
+        ),
         "created_at": "2026-10-20T09:30:00Z",
     },
     {
