@@ -112,7 +112,7 @@ flowchart TD
 |---|---|---|
 | 1. Hard rules | **Block** (no AI judgment, no exceptions) | Recipient changed mid-job; amount breaks the oath's caps; job category the user excluded; blocklisted seller or trust score below the floor |
 | 2. High risk | **Block** | Combined risk score from the soft signals is in the high band |
-| 3. Needs a human | **Ask** | Amount above the user's "ask me" threshold; brand-new seller; medium risk; the Auditor is unsure or cannot parse the request |
+| 3. Needs a human | **Ask** | Amount above the user's "ask me" threshold;brand-new seller; amount above the seller's current limit; medium risk; the Auditor is unsure or cannot parse the request|
 | 4. All clear | **Approve** | Risk is low and the amount fits within the seller's current trust-based limit |
 
 ### The six risk signals
@@ -149,12 +149,11 @@ The thresholds are placeholders to tune. The structure stays fixed.
 
 ## How we use PayPal
 
-Horkos is built on the **PayPal sandbox**. No real money moves anywhere in this project.
+Horkos is built for the **PayPal sandbox**. No real money moves anywhere in this project.
 
-- **Funding:** a job is funded through the PayPal REST API (sandbox).
-- **Escrow:** while the work is being checked, funds are tracked in Horkos's own ledger (stored as integer cents) so every state change is recorded and auditable.
-- **Release:** when work is verified, the seller is paid out through PayPal.
-- **Refund:** when work fails verification, the buyer is refunded through PayPal.
+- **Escrow:** Horkos tracks the hold in its own ledger (integer cents), so every state change is recorded and auditable.
+- **Simulated in this build:** funding, payouts and refunds are recorded as simulated entries. The app does not call PayPal for them yet.
+- **Tested against PayPal's sandbox:** authorize, capture and void, in a standalone script (a hold was placed, then captured or voided). Seller payouts and real refunds are not tested yet.
 
 
 
@@ -164,11 +163,11 @@ Horkos uses the **Gemini API** for its AI roles. We chose a lite model because t
 
 | Role | What it does |
 |---|---|
-| **Buyer Agent** | Turns a user's request into a concrete payment proposal, using tool calling to ask the backend to act. It can only *propose*; it can never move money itself. |
-| **Auditor** | Reads each proposal against the user's oath and original request, and returns a structured verdict with a risk assessment and a plain-English reason. |
-| **Verifier** | Reviews delivered work for judgment calls that automated tests cannot make. |
+| **Buyer Agent** | Turns a user's request into a payment proposal, plus acceptance tests and a test file. It returns structured JSON that the backend validates. It can only *propose*; it can never move money itself. |
+| **Auditor** | Checks whether the payment buys the kind of work the user asked for, and returns a structured verdict with a plain-English reason. Price is judged by the code's fixed rules, not by the AI. |
+| **Verifier** (planned) | Would review delivered work for judgment calls that automated tests cannot make. Not built yet. Verification today is automatic: the seller's code runs against the tests in a sandbox, with no AI involved. |
 
-The AI never touches credentials or money directly. It asks, and the backend decides and acts, after the hard rules have run.
+The AI never touches credentials or money. The backend validates everything the AI returns, and the hard rules cannot be overridden by it.
 
 ## How we used APIMatic
 
@@ -235,8 +234,9 @@ Open `.env` and fill in your values:
 | `PAYPAL_CLIENT_ID` | Client ID of your PayPal **sandbox** app |
 | `PAYPAL_CLIENT_SECRET` | Secret of your PayPal **sandbox** app |
 | `PAYPAL_ENVIRONMENT` | Keep as `sandbox` |
-| `GEMINI_API_KEY` | Your Gemini API key |
-| `GEMINI_MODEL` | The Gemini model to use (currently `gemini-3.5-flash-lite`) |
+| `GEMINI_API_KEY` | Your Google AI Studio key, from aistudio.google.com/apikey |
+| `GEMINI_MODEL` | The model name. Default `gemini-3.5-flash-lite` (about 3 to 4 seconds per call in our tests) |
+| `GEMINI_THINKING_LEVEL` | Optional: `low`, `medium` or `high`. Leave empty unless your model accepts it |
 | `DATABASE_URL` | Defaults to a local SQLite file; use a PostgreSQL URL for production |
 | `JWT_SECRET` | Any long random string |
 | `FRONTEND_ORIGIN` | Defaults to `http://localhost:3000` |
@@ -367,7 +367,7 @@ We want to be upfront about what Horkos is and is not.
 - **Thresholds are examples.** Limits, risk bands and trust tiers are tuned for the demo.
 - **The blocklist rule is built but inactive** until blocklist storage is added.
 - **Funding is simulated** until the PayPal pay and refund work is finished.
-
+- **Seller submissions are not authenticated yet.** There is no separate seller login, so anyone can submit work as any seller in this demo.
 
 ## Roadmap
 

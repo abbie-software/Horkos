@@ -31,8 +31,7 @@ Every error uses the same shape:
 |---|---|---|
 | 401 | `unauthorized` | Missing or bad token |
 | 404 | `not_found` | Unknown ID, including an unknown `seller_id` on `POST /jobs` |
-| 409 | `invalid_state` | Action not allowed in the current status |
-| 409 | (code to be confirmed) | `POST /jobs` when the user has no saved oath |
+| 409 | `invalid_state` | Action not allowed in the current state, for example a payment already decided, or `POST /jobs` when the user has no saved oath |
 | 422 | `validation_error` | Bad input |
 | 500 | `server_error` | Anything else, including a Buyer Agent failure |
 
@@ -77,7 +76,7 @@ If the Guard errors, times out or is unsure, the payment goes to `awaiting_user`
 
 **Job status:** `open`, `awaiting_work`, `verifying`, `completed`, `failed`, `cancelled`
 
-**Job category** (also used for `allowed_categories` and `blocked_categories` in the oath): `coding`, `writing`, `design`, `data`, `other`
+**Job category:** `coding`, `writing`, `design`, `data`, `other`. The Buyer Agent must pick one of these five. The oath's `allowed_categories` and `blocked_categories` are free text (lowercased) compared with the job's category. A job is blocked (`excluded_category`) if its category is on the blocked list, or if the oath has an allowed list and the category is not on it.
 
 ---
 

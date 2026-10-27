@@ -298,7 +298,7 @@ export const mockEvents: HorkosEvent[] = [
   { id: "evt_003", type: "payment.status_changed", at: "2026-10-20T11:00:05Z", payment_id: "pay_1007", seller_id: "sel_kip", message: "Funds are being held.", payload: { from: "approved", to: "held" } },
   { id: "evt_004", type: "verification.result", at: "2026-10-20T11:08:00Z", payment_id: "pay_1007", seller_id: "sel_kip", message: "Work passed 8 of 8 tests.", payload: { passed: true, tests_passed: 8, tests_total: 8 } },
   { id: "evt_005", type: "payment.status_changed", at: "2026-10-20T11:08:10Z", payment_id: "pay_1007", seller_id: "sel_kip", message: "Kip Codes was paid $15.00.", payload: { from: "verified", to: "released" } },
-  { id: "evt_006", type: "trust.updated", at: "2026-10-20T11:08:11Z", payment_id: "pay_1007", seller_id: "sel_kip", message: "Kip Codes's trust rose from 46 to 58. New limit: $30.00.", payload: { old_score: 46, new_score: 58, new_limit_cents: 3000 } },
+  { id: "evt_006", type: "trust.updated", at: "2026-10-20T11:08:11Z", payment_id: "pay_1007", seller_id: "sel_kip", message: "Kip Codes's trust rose from 46 to 58. New limit: $25.00.", payload: { old_score: 46, new_score: 58, new_limit_cents: 2500 } },
   { id: "evt_007", type: "demo.attack_started", at: "2026-10-20T11:15:00Z", payment_id: null, seller_id: null, message: "Red Team: attempting to change the recipient mid-job.", payload: { attack: "recipient_change" } },
   { id: "evt_008", type: "payment.verdict", at: "2026-10-20T11:15:01Z", payment_id: "pay_1008", seller_id: "sel_nova", message: "Guard blocked the payment: recipient changed mid-job.", payload: { verdict: "block", risk_level: "high", risk_score: 97, hard_rule: "recipient_changed" } },
 ];
