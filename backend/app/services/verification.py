@@ -8,8 +8,8 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.models import Job, Payment, PaymentEvent, PaymentState, Seller, Submission
+from app.services.activity import move, record_check, record_trust
 from app.services.funding import Funder, SimulatedFunder
-from app.services.ledger import transition
 from app.services.sandbox import SandboxResult, run_in_sandbox
 from app.services.trust import apply_outcome
 
@@ -69,35 +69,42 @@ def apply_verification(
                 ),
             )
         )
+        record_check(db, payment, seller, result)
         return
 
     seller.last_activity_at = now
+    record_check(db, payment, seller, result)
     if result.status == "passed":
-        transition(
+        move(
             db,
             payment,
+            seller,
             PaymentState.VERIFIED,
             f"{result.passed} of {result.total} tests passed.",
         )
         payment.payout_ref = funder.release(payment)
         old, new = apply_outcome(seller, passed=True)
-        transition(
+        move(
             db,
             payment,
+            seller,
             PaymentState.RELEASED,
             f"{seller.name} was paid. Trust score {old} to {new}.",
         )
+        record_trust(db, payment, seller, old, new)
         submission.status = "passed"
         job.status = "completed"
     else:
         old, new = apply_outcome(seller, passed=False)
         payment.refund_ref = funder.refund(payment)
-        transition(
+        move(
             db,
             payment,
+            seller,
             PaymentState.REFUNDED,
             f"{refund_reason(result)} You were refunded. Trust score {old} to {new}.",
         )
+        record_trust(db, payment, seller, old, new)
         submission.status = result.status
         job.status = "failed"
 

@@ -5,8 +5,23 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.database import SessionLocal
-from app.models import Job, Payment, PaymentEvent, PaymentState, Seller, User
-from app.scripts.demo_data import DEMO_OATH, DEMO_USER, JOBS, PAYMENTS, SELLERS
+from app.models import (
+    AuditEntry,
+    Job,
+    Payment,
+    PaymentEvent,
+    PaymentState,
+    Seller,
+    User,
+)
+from app.scripts.demo_data import (
+    AUDIT,
+    DEMO_OATH,
+    DEMO_USER,
+    JOBS,
+    PAYMENTS,
+    SELLERS,
+)
 from app.services.oath_store import get_latest_oath, save_oath
 
 
@@ -106,6 +121,23 @@ def seed_demo_data(db: Session) -> list[str]:
             )
             previous = status
         added.append(f"payment {data['id']}")
+    db.flush()
+
+    for number, payment_number, at, actor, action, verdict, reason, details in AUDIT:
+        if db.get(AuditEntry, number) is None:
+            db.add(
+                AuditEntry(
+                    id=number,
+                    payment_id=payment_number,
+                    actor=actor,
+                    action=action,
+                    verdict=verdict,
+                    reason=reason,
+                    details_json=json.dumps(details),
+                    created_at=ts(at),
+                )
+            )
+            added.append(f"audit entry {number}")
     db.flush()
     return added
 

@@ -120,3 +120,33 @@ class PaymentEvent(Base):
     to_state: Mapped[str] = mapped_column(String(20))
     reason: Mapped[str] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class AuditEntry(Base):
+    """One line of the audit trail: who did what to a payment, and why."""
+
+    __tablename__ = "audit_entries"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    payment_id: Mapped[int] = mapped_column(ForeignKey("payments.id"), index=True)
+    # user, buyer_agent, guard, verifier or system
+    actor: Mapped[str] = mapped_column(String(20))
+    action: Mapped[str] = mapped_column(String(60))
+    verdict: Mapped[str | None] = mapped_column(String(10))
+    reason: Mapped[str] = mapped_column(Text)
+    details_json: Mapped[str] = mapped_column(Text, default="{}")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class Event(Base):
+    """One thing that happened, for the Live Feed. The stream reads this table."""
+
+    __tablename__ = "events"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    type: Mapped[str] = mapped_column(String(40))
+    payment_id: Mapped[int | None] = mapped_column(ForeignKey("payments.id"))
+    seller_id: Mapped[int | None] = mapped_column(ForeignKey("sellers.id"))
+    message: Mapped[str] = mapped_column(Text)
+    payload_json: Mapped[str] = mapped_column(Text, default="{}")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)

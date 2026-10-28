@@ -292,3 +292,34 @@ PAYMENTS = [
         "updated_at": "2026-10-19T16:20:00Z",
     },
 ]
+
+
+# The audit trail from frontend/src/lib/mock-data.ts, so the Audit Trail screen
+# is not empty on a fresh database. (id, payment, time, actor, action, verdict, reason, details)
+AUDIT = [
+    (1, 1001, "2026-10-20T09:00:00Z", "buyer_agent", "Proposed a payment", None,
+     "Proposed $20.00 to Nova Scripts for the CSV script job.", {"amount_cents": 2000}),
+    (2, 1001, "2026-10-20T09:00:02Z", "guard", "Reviewed the payment", "approve",
+     "Within limits, matches the request, trusted seller.", {"risk_score": 6}),
+    (3, 1001, "2026-10-20T09:00:05Z", "system", "Secured funds", None,
+     "Funds secured in escrow.", {}),
+    (4, 1001, "2026-10-20T09:12:30Z", "verifier", "Checked the work", None,
+     "8 of 8 tests passed.", {"passed": 8, "total": 8}),
+    (5, 1001, "2026-10-20T09:12:41Z", "system", "Released payment", None,
+     "Nova Scripts was paid $20.00.", {}),
+    (6, 1003, "2026-10-20T10:00:00Z", "buyer_agent", "Proposed a payment", None,
+     "Proposed $25.00 to Zed Dev.", {"amount_cents": 2500}),
+    (7, 1003, "2026-10-20T10:00:03Z", "guard", "Reviewed the payment", "ask",
+     "New seller with no history, and the amount is above their limit.", {"risk_score": 48}),
+    (8, 1004, "2026-10-20T10:20:01Z", "guard", "Reviewed the payment", "block",
+     "$500.00 is above the $50.00 per-job cap.", {"hard_rule": "over_cap"}),
+    (9, 1005, "2026-10-20T10:40:01Z", "guard", "Reviewed the payment", "block",
+     "Recipient changed mid-job.", {"hard_rule": "recipient_changed"}),
+    (10, 1006, "2026-10-19T16:20:00Z", "verifier", "Checked the work", None,
+     "3 of 8 tests passed. The work did not meet the agreed tests.", {"passed": 3, "total": 8}),
+    (11, 1006, "2026-10-19T16:20:01Z", "system", "Refunded the buyer", None,
+     "Payment refunded to Amara.", {}),
+    (12, 1006, "2026-10-19T16:20:02Z", "system", "Lowered trust", None,
+     "QuickPay Dev's trust score dropped from 31 to 9 and the limit fell to $5.00.",
+     {"old_score": 31, "new_score": 9}),
+]
