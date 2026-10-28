@@ -11,6 +11,7 @@ from app.services.buyer_agent import GeminiBuyerAgent
 from app.services.funding import SimulatedFunder
 from app.services.intent import GeminiIntentChecker
 from app.services.sandbox import run_in_sandbox
+from app.services.streaming import StreamSettings
 
 DEMO_EMAIL = "amara@example.com"
 
@@ -48,3 +49,13 @@ def get_session_factory():
 
 def get_runner():
     return run_in_sandbox
+
+
+def get_stream_settings() -> StreamSettings:
+    return StreamSettings()
+
+
+def check_stream_token(token: str | None = None) -> str | None:
+    """TEMPORARY: the browser's EventSource cannot send headers, so the contract
+    puts the token in the query string. Check it here once login exists."""
+    return token

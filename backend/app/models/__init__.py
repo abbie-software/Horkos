@@ -1,4 +1,6 @@
 from app.models.tables import (
+    AuditEntry,
+    Event,
     Job,
     Oath,
     Payment,
@@ -10,6 +12,8 @@ from app.models.tables import (
 )
 
 __all__ = [
+    "AuditEntry",
+    "Event",
     "Job",
     "Oath",
     "Payment",

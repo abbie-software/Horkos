@@ -9,11 +9,18 @@ from app.errors import ApiError
 from app.models import Job, Payment, PaymentState, Seller, User
 from app.schemas.oath import Policy
 from app.schemas.payments import DecisionOut
+from app.services.activity import (
+    move,
+    record_proposal,
+    record_user_choice,
+    record_verdict,
+)
 from app.services.buyer_agent import BuyerAgent, BuyerAgentError
 from app.services.funding import Funder
 from app.services.guard import IntentChecker, safe_review
 from app.services.hard_rules import Proposal, SellerFacts, dollars
-from app.services.ledger import create_payment, transition
+from app.services.ledger import create_payment
+from app.services.messages import BLOCK_NOTES
 from app.services.oath_store import get_latest_oath
 from app.services.seller_choice import pick_seller
 from app.services.signals import Activity
@@ -28,13 +35,6 @@ COUNTED_AS_SPENT = (
     PaymentState.VERIFIED,
     PaymentState.RELEASED,
 )
-
-BLOCK_NOTES = {
-    "recipient_changed": "recipient changed mid-job.",
-    "over_cap": "over your spending cap.",
-    "excluded_category": "category not allowed by your oath.",
-    "blocklisted_or_low_trust": "seller is blocklisted or not trusted.",
-}
 
 
 def seller_facts(seller: Seller) -> SellerFacts:
@@ -91,9 +91,11 @@ def block_note(decision: DecisionOut) -> str:
     return f"Guard blocked: the risk score is {decision.risk_score} out of 100."
 
 
-def hold_funds(db: Session, payment: Payment, job: Job | None, funder: Funder) -> None:
+def hold_funds(
+    db: Session, payment: Payment, job: Job | None, seller: Seller, funder: Funder
+) -> None:
     payment.paypal_authorization_id = funder.hold(payment)
-    transition(db, payment, PaymentState.HELD, "Funds secured.")
+    move(db, payment, seller, PaymentState.HELD, "Funds secured.")
     if job is not None:
         job.status = "awaiting_work"
 
@@ -102,24 +104,30 @@ def apply_verdict(
     db: Session,
     payment: Payment,
     job: Job,
+    seller: Seller,
     decision: DecisionOut,
     funder: Funder,
 ) -> None:
     if decision.verdict == "block":
-        transition(db, payment, PaymentState.BLOCKED, block_note(decision))
+        move(db, payment, seller, PaymentState.BLOCKED, block_note(decision))
         job.status = "cancelled"
     elif decision.verdict == "ask":
-        transition(
-            db, payment, PaymentState.AWAITING_USER, "Guard asked the user to decide."
-        )
-    else:
-        transition(
+        move(
             db,
             payment,
+            seller,
+            PaymentState.AWAITING_USER,
+            "Guard asked the user to decide.",
+        )
+    else:
+        move(
+            db,
+            payment,
+            seller,
             PaymentState.APPROVED,
             f"Guard approved ({decision.risk_level} risk).",
         )
-        hold_funds(db, payment, job, funder)
+        hold_funds(db, payment, job, seller, funder)
 
 
 def run_job(
@@ -184,6 +192,7 @@ def run_job(
             f"Buyer Agent proposed paying {dollars(idea.amount_cents)} to {seller.name}."
         ),
     )
+    record_proposal(db, payment, seller)
 
     activity = load_activity(db, user.id, now, exclude_payment_id=payment.id)
     proposal = Proposal(
@@ -196,7 +205,8 @@ def run_job(
         proposal, seller_facts(seller), policy, request_text, activity, checker
     )
     payment.decision_json = decision.model_dump_json()
-    apply_verdict(db, payment, job, decision, funder)
+    record_verdict(db, payment, seller, decision)
+    apply_verdict(db, payment, job, seller, decision, funder)
     return job, payment
 
 
@@ -211,11 +221,14 @@ def decide_payment(
         raise ApiError(409, "invalid_state", "This payment has already been decided.")
 
     job = db.get(Job, payment.job_id) if payment.job_id else None
-    if choice == "approve":
-        transition(db, payment, PaymentState.APPROVED, "You approved the payment.")
-        hold_funds(db, payment, job, funder)
+    seller = db.get(Seller, payment.seller_id)
+    approved = choice == "approve"
+    record_user_choice(db, payment, approved)
+    if approved:
+        move(db, payment, seller, PaymentState.APPROVED, "You approved the payment.")
+        hold_funds(db, payment, job, seller, funder)
     else:
-        transition(db, payment, PaymentState.BLOCKED, "You rejected the payment.")
+        move(db, payment, seller, PaymentState.BLOCKED, "You rejected the payment.")
         if job is not None:
             job.status = "cancelled"
     return payment
