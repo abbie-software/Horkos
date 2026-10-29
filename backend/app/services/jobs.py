@@ -139,11 +139,13 @@ def run_job(
     checker: IntentChecker,
     funder: Funder,
     now: datetime | None = None,
+    recipient_email: str | None = None,
 ) -> tuple[Job, Payment]:
     """Start a job: the Buyer Agent proposes a payment and the Guard decides.
 
     Nothing is committed here. The caller commits once, so a failure part-way
-    through leaves nothing behind.
+    through leaves nothing behind. recipient_email is only used by the demo's
+    Red Team, to play a payment that tries to go to a different account.
     """
     now = now or datetime.now(UTC)
 
@@ -198,7 +200,7 @@ def run_job(
     proposal = Proposal(
         amount_cents=idea.amount_cents,
         category=idea.category,
-        recipient_email=seller.paypal_email,
+        recipient_email=recipient_email or seller.paypal_email,
         description=idea.description,
     )
     decision = safe_review(
