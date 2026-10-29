@@ -4,6 +4,7 @@ from fastapi import Depends
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.config import settings
 from app.database import SessionLocal, get_db
 from app.errors import ApiError
 from app.models import User
@@ -59,3 +60,18 @@ def check_stream_token(token: str | None = None) -> str | None:
     """TEMPORARY: the browser's EventSource cannot send headers, so the contract
     puts the token in the query string. Check it here once login exists."""
     return token
+
+
+def get_demo_enabled() -> bool:
+    return settings.demo_controls
+
+
+def check_demo_enabled(enabled: Annotated[bool, Depends(get_demo_enabled)]) -> None:
+    """The demo controls can wipe the data, so they can be switched off."""
+    if not enabled:
+        raise ApiError(404, "not_found", "Not found.")
+
+
+def get_attack_pause() -> float:
+    """Seconds between the steps of an attack, so the Live Feed is easy to follow."""
+    return 1.0

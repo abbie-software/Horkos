@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
 from app.errors import install_error_handlers
-from app.routes import audit, events, jobs, oath, payments, sellers
+from app.routes import audit, demo, events, jobs, oath, payments, sellers
 
 app = FastAPI(title="Horkos")
 
@@ -21,6 +21,7 @@ app.include_router(sellers.router)
 app.include_router(payments.router)
 app.include_router(audit.router)
 app.include_router(events.router)
+app.include_router(demo.router)
 
 
 @app.get("/health")
