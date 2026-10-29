@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, TrendingUp } from "lucide-react";
+import { TrendingUp } from "lucide-react";
 import { formatUSD } from "@/lib/api";
 import { initials } from "@/lib/format";
 import { nextStep } from "@/lib/trust";
@@ -71,7 +71,7 @@ export default function NextPromotion({ sellers }: { sellers: Seller[] }) {
         className="mt-5 inline-flex items-center gap-1.5 text-sm font-semibold text-[#8a6420] hover:underline dark:text-accent"
       >
         Watch trust change in the Live Feed
-        <ArrowRight size={15} />
+        
       </Link>
     </section>
   );
