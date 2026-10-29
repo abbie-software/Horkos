@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ShieldCheck } from "lucide-react";
+
 import PageHeader from "@/components/PageHeader";
 import OathEditor from "@/components/oath/OathEditor";
 import PolicySummary from "@/components/oath/PolicySummary";
@@ -101,8 +101,8 @@ export default function OathPage() {
         />
       </div>
 
-      <div className="mt-6 flex items-start gap-3 rounded-xl border-l-4 border-accent bg-card p-4">
-        <ShieldCheck size={20} className="mt-0.5 shrink-0 text-accent" />
+      <div className="mt-6 flex items-start gap-3 rounded-xl bg-card p-4">
+       
         <p className="text-sm">
           <span className="font-serif text-base font-semibold">
             Hard rules beat AI.{" "}

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Pause, Play, RotateCcw, Zap } from "lucide-react";
+import { Pause, Play, RotateCcw } from "lucide-react";
 import PageHeader from "@/components/PageHeader";
 import ActiveOath from "@/components/live-feed/ActiveOath";
 import DemoControls from "@/components/live-feed/DemoControls";
@@ -63,7 +63,7 @@ export default function LiveFeedPage() {
         <section className="lg:col-span-2">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <h2 className="flex items-center gap-2 font-serif text-lg font-semibold sm:text-xl">
-              <Zap size={18} className="text-accent" />
+             
               Live Event Stream
             </h2>
             <div className="flex items-center gap-3 text-xs text-muted">

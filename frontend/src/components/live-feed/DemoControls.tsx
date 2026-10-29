@@ -51,12 +51,9 @@ export default function DemoControls({ onReset }: { onReset: () => void }) {
   return (
     <section className="rounded-2xl border border-white/10 bg-sidebar p-5 text-sidebar-foreground">
       <div className="flex items-start justify-between gap-3">
-        <h2 className="font-serif text-xl font-semibold text-white">
+        <h2 className="font-serif text-xl font-semibold text-black">
           Demo controls
         </h2>
-        <span className="rounded-full border border-accent/50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-accent">
-          Interactive
-        </span>
       </div>
       <p className="mt-2 text-sm text-sidebar-muted">
         Play the part of a bad agent and watch the Guard respond.

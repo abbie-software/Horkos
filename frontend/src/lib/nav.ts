@@ -4,6 +4,7 @@ import {
   ScrollText,
   ShieldCheck,
   Wallet,
+  Settings,
 } from "lucide-react";
 
 export const navItems = [
@@ -12,4 +13,5 @@ export const navItems = [
   { href: "/money-tracker", label: "Money Tracker", icon: Wallet },
   { href: "/trust-board", label: "Trust Board", icon: ShieldCheck },
   { href: "/audit-trail", label: "Audit Trail", icon: ClipboardList },
+  { href: "/settings", label: "Settings", icon: Settings },
 ];

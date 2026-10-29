@@ -1,24 +1,38 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 import { Moon, Sun } from "lucide-react";
+
+function subscribeToTheme(onChange: () => void) {
+  const observer = new MutationObserver(onChange);
+  observer.observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ["class"],
+  });
+  return () => observer.disconnect();
+}
+
+function getThemeSnapshot() {
+  return document.documentElement.classList.contains("dark");
+}
+
+function getServerThemeSnapshot() {
+  return false;
+}
 
 export default function ThemeToggle({
   variant = "default",
 }: {
   variant?: "default" | "sidebar";
 }) {
-  const [dark, setDark] = useState(false);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setDark(document.documentElement.classList.contains("dark"));
-    setMounted(true);
-  }, []);
+  const dark = useSyncExternalStore(
+    subscribeToTheme,
+    getThemeSnapshot,
+    getServerThemeSnapshot
+  );
 
   function toggle() {
-    const next = !dark;
-    setDark(next);
+    const next = !document.documentElement.classList.contains("dark");
     document.documentElement.classList.toggle("dark", next);
     try {
       localStorage.setItem("horkos-theme", next ? "dark" : "light");
@@ -27,7 +41,7 @@ export default function ThemeToggle({
 
   const styles =
     variant === "sidebar"
-      ? "border-white/15 text-sidebar-foreground hover:bg-white/10"
+      ? "border-sidebar-active text-sidebar-foreground hover:bg-sidebar-active"
       : "border-border text-foreground hover:bg-foreground/5";
 
   return (
@@ -37,7 +51,7 @@ export default function ThemeToggle({
       aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}
       className={`inline-flex h-9 w-9 items-center justify-center rounded-lg border transition-colors ${styles}`}
     >
-      {mounted ? dark ? <Sun size={18} /> : <Moon size={18} /> : null}
+      {dark ? <Sun size={18} /> : <Moon size={18} />}
     </button>
   );
 }

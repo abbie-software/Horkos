@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
 import { formatUSD, getOath } from "@/lib/api";
 import type { Oath } from "@/lib/types";
 
@@ -68,7 +67,6 @@ export default function ActiveOath() {
         className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-[#8a6420] hover:underline dark:text-accent"
       >
         Edit your oath
-        <ArrowRight size={15} />
       </Link>
     </section>
   );
