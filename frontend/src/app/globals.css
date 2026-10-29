@@ -20,6 +20,8 @@
   --approve: #1f9d6b;
   --block: #d64550;
   --ask: #e8a33d;
+  --brand: #5b0a0e; 
+  --brand-foreground: #ffffff;
 }
 
 /* ---------- Dark mode ---------- */
@@ -31,6 +33,8 @@
   --border: #263459;
 
   --sidebar: #070c1a;
+  --brand: #e3a0a6; 
+  --brand-foreground: #2a0709;
 }
 
 /* Makes the colours and fonts available as Tailwind classes */
@@ -48,10 +52,13 @@
   --color-approve: var(--approve);
   --color-block: var(--block);
   --color-ask: var(--ask);
+  --color-brand: var(--brand); 
+  --color-brand-foreground: var(--brand-foreground);
 
-  --font-sans: var(--font-inter);
-  --font-serif: var(--font-source-serif);
+  --font-sans: var(--font-instrument);
+  --font-serif: var(--font-newsreader);
   --font-mono: var(--font-jetbrains-mono);
+  
 }
 
 body {
@@ -78,3 +85,10 @@ body {
     animation: none;
   }
 }
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: none; }
+}
+.rise { animation: rise 0.6s cubic-bezier(0.23, 1, 0.32, 1) both; }
+@media (prefers-reduced-motion: reduce) { .rise { animation: none; } }
