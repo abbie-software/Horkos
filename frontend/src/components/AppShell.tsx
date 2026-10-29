@@ -7,6 +7,7 @@ import { Menu, X } from "lucide-react";
 import { navItems } from "@/lib/nav";
 //import { mockUser } from "@/lib/mock-data";
 import ThemeToggle from "./ThemeToggle";
+import { Mark } from "@/components/brand/Logo";
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -38,9 +39,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       >
         <div className="flex h-16 items-center justify-between px-5">
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-accent font-serif text-lg font-semibold text-white">
-              H
-            </div>
+            <Mark className="h-9 w-9" fill="var(--accent)" />
             <div className="leading-tight">
               <p className="font-serif text-lg font-semibold text-white">
                 Horkos
