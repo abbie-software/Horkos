@@ -51,7 +51,7 @@ export default function DemoControls({ onReset }: { onReset: () => void }) {
   return (
     <section className="rounded-2xl border border-white/10 bg-sidebar p-5 text-sidebar-foreground">
       <div className="flex items-start justify-between gap-3">
-        <h2 className="font-serif text-xl font-semibold text-white">
+        <h2 className="font-serif text-xl font-semibold text-black">
           Demo controls
         </h2>
       </div>

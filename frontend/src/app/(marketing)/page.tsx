@@ -23,10 +23,11 @@ function Step({ i, progress, title, text }: { i: number; progress: MotionValue<n
   const a = i / n;
   const b = (i + 1) / n;
   const last = i === n - 1;
+  const fadeInEnd = Math.min(a + 0.08, b);
   const opacity = useTransform(
     progress,
-    last ? [a - 0.08, a, 1, 1.01] : [a - 0.08, a, b - 0.02, b + 0.06],
-    last ? [0.22, 1, 1, 1] : [0.22, 1, 1, 0.22]
+    [a, fadeInEnd, b],
+    last ? [0.22, 1, 1] : [0.22, 1, 0.22]
   );
   return (
     <motion.li style={{ opacity }} className="flex gap-5">

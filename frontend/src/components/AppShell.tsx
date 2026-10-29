@@ -38,20 +38,25 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         }`}
       >
         <div className="flex h-16 items-center justify-between px-5">
-          <div className="flex items-center gap-3">
+          <Link
+            href="/"
+            onClick={() => setOpen(false)}
+            aria-label="Horkos home"
+            className="flex items-center gap-3 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+          >
             <Mark className="h-9 w-9" fill="var(--accent)" />
             <div className="leading-tight">
-              <p className="font-serif text-lg font-semibold text-white">
+              <p className="font-serif text-lg font-semibold text-sidebar-foreground">
                 Horkos
               </p>
               <p className="text-xs text-sidebar-muted">AI spending guard</p>
             </div>
-          </div>
+          </Link>
           <button
             type="button"
             onClick={() => setOpen(false)}
             aria-label="Close menu"
-            className="rounded-lg p-2 text-sidebar-muted hover:bg-white/10 lg:hidden"
+            className="rounded-lg p-2 text-sidebar-muted hover:bg-sidebar-active lg:hidden"
           >
             <X size={18} />
           </button>
@@ -67,7 +72,12 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                 key={item.href}
                 href={item.href}
                 onClick={() => setOpen(false)}
-                className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium `}
+                aria-current={active ? "page" : undefined}
+                className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
+                  active
+                    ? "bg-sidebar-active text-sidebar-foreground"
+                    : "text-sidebar-muted hover:bg-sidebar-active hover:text-sidebar-foreground"
+                }`}
               >
                 <Icon size={18} />
                 {item.label}
@@ -76,13 +86,13 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           })}
         </nav>
 
-        <div className="flex items-center justify-between border-t border-white/10 p-4">
+        <div className="flex items-center justify-between border-t border-sidebar-active p-4">
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-accent text-sm font-semibold text-white">
+            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-accent text-sm font-semibold text-sidebar-foreground">
               {/* {mockUser.name.charAt(0)} */}
             </div>
             <div className="leading-tight">
-              <p className="text-sm font-medium text-white">{/* {mockUser.name} */}</p>
+              <p className="text-sm font-medium text-sidebar-foreground">{/* {mockUser.name} */}</p>
               <p className="text-xs text-sidebar-muted">Buyer</p>
             </div>
           </div>

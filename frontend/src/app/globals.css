@@ -11,10 +11,10 @@
   --muted: #5b6478;
   --border: #e3ddcc;
 
-  --sidebar: #0b1224;
-  --sidebar-active: #141e38;
-  --sidebar-foreground: #e9e5d8;
-  --sidebar-muted: #8f98ad;
+  --sidebar: #efebe1;
+  --sidebar-active: #e3ddcc;
+  --sidebar-foreground: #0b1224;
+  --sidebar-muted: #5b6478;
 
   --accent: #b8893b;
   --approve: #1f9d6b;
@@ -33,6 +33,9 @@
   --border: #263459;
 
   --sidebar: #070c1a;
+  --sidebar-active: #141e38;
+  --sidebar-foreground: #e9e5d8;
+  --sidebar-muted: #8f98ad;
   --brand: #e3a0a6; 
   --brand-foreground: #2a0709;
 }

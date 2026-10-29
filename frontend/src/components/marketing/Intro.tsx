@@ -8,25 +8,17 @@ const EASE = [0.23, 1, 0.32, 1] as const;
 
 export default function Intro({ onDone }: { onDone: () => void }) {
   const reduce = useReducedMotion();
-  const [show, setShow] = useState(false);
+  const [show, setShow] = useState(true);
 
   const finish = useCallback(() => {
-    try {
-      sessionStorage.setItem("horkos-intro", "1");
-    } catch {}
     setShow(false);
   }, []);
 
   useEffect(() => {
-    let seen = false;
-    try {
-      seen = sessionStorage.getItem("horkos-intro") === "1";
-    } catch {}
-    if (seen || reduce) {
+    if (reduce) {
       onDone();
       return;
     }
-    setShow(true);
     const timer = setTimeout(finish, 3600);
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && finish();
     window.addEventListener("keydown", onKey);
@@ -38,7 +30,7 @@ export default function Intro({ onDone }: { onDone: () => void }) {
 
   return (
     <AnimatePresence onExitComplete={onDone}>
-      {show && (
+      {show && !reduce && (
         <motion.div
           key="intro"
           onClick={finish}
