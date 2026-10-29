@@ -54,9 +54,6 @@ export default function DemoControls({ onReset }: { onReset: () => void }) {
         <h2 className="font-serif text-xl font-semibold text-white">
           Demo controls
         </h2>
-        <span className="rounded-full border border-accent/50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-accent">
-          Interactive
-        </span>
       </div>
       <p className="mt-2 text-sm text-sidebar-muted">
         Play the part of a bad agent and watch the Guard respond.

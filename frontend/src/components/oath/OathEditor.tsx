@@ -1,4 +1,4 @@
-import { PenLine, Plus, RotateCcw, ShieldCheck } from "lucide-react";
+import {  Plus, RotateCcw, ShieldCheck } from "lucide-react";
 
 const SUGGESTIONS = [
   "Never spend over $50 per job.",
@@ -40,7 +40,6 @@ export default function OathEditor({
   return (
     <section className="rounded-2xl border border-border bg-card p-4 sm:p-5">
       <h2 className="flex items-center gap-2 font-serif text-lg font-semibold sm:text-xl">
-        <PenLine size={18} className="text-accent" />
         Write your oath
       </h2>
 

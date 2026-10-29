@@ -78,9 +78,6 @@ export default function PaymentDetail({
 
       {/* Lifecycle */}
       <div className="rounded-xl bg-foreground/5 p-4">
-        <p className="mb-4 text-[11px] font-semibold uppercase tracking-wider text-muted">
-          Lifecycle
-        </p>
         <ol className="grid grid-cols-5">
           {steps.map((step, i) => (
             <li
