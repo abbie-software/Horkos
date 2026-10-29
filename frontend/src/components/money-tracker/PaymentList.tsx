@@ -55,11 +55,7 @@ export default function PaymentList({
                   type="button"
                   onClick={() => onSelect(p.id)}
                   aria-current={selected}
-                  className={`flex w-full items-center gap-3 rounded-lg border-l-4 px-3 py-3 text-left transition-colors ${
-                    selected
-                      ? "border-accent bg-accent/10"
-                      : "border-transparent hover:bg-foreground/5"
-                  }`}
+                  className={`flex w-full items-center gap-3 rounded-lg px-3 py-3 text-left transition-colors`}
                 >
                   <span
                     className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-semibold ${avatarClass(p.status)}`}

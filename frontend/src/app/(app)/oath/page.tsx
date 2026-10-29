@@ -101,7 +101,7 @@ export default function OathPage() {
         />
       </div>
 
-      <div className="mt-6 flex items-start gap-3 rounded-xl border-l-4 border-accent bg-card p-4">
+      <div className="mt-6 flex items-start gap-3 rounded-xl bg-card p-4">
         <ShieldCheck size={20} className="mt-0.5 shrink-0 text-accent" />
         <p className="text-sm">
           <span className="font-serif text-base font-semibold">

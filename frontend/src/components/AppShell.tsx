@@ -67,11 +67,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                 key={item.href}
                 href={item.href}
                 onClick={() => setOpen(false)}
-                className={`flex items-center gap-3 rounded-lg border-l-2 px-3 py-2.5 text-sm font-medium transition-colors ${
-                  active
-                    ? "border-accent bg-sidebar-active text-white"
-                    : "border-transparent text-sidebar-muted hover:bg-sidebar-active/60 hover:text-white"
-                }`}
+                className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors `}
               >
                 <Icon size={18} />
                 {item.label}
