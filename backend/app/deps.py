@@ -1,7 +1,7 @@
 from typing import Annotated
 
 from fastapi import Depends
-from sqlalchemy import select
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 
 from app.config import settings
@@ -13,22 +13,21 @@ from app.services.funding import SimulatedFunder
 from app.services.intent import GeminiIntentChecker
 from app.services.sandbox import run_in_sandbox
 from app.services.streaming import StreamSettings
+from app.services.tokens import read_token
 
-DEMO_EMAIL = "amara@example.com"
+bearer = HTTPBearer(auto_error=False)
 
 
-def get_current_user(db: Annotated[Session, Depends(get_db)]) -> User:
-    """TEMPORARY stand-in until login exists: every caller is the demo user.
-
-    Replace this with a Bearer-token check when POST /auth/login is built.
-    """
-    user = db.scalar(select(User).where(User.email == DEMO_EMAIL))
+def get_current_user(
+    credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(bearer)],
+    db: Annotated[Session, Depends(get_db)],
+) -> User:
+    """Who is calling: the user named in a valid Bearer token."""
+    if credentials is None or credentials.scheme.lower() != "bearer":
+        raise ApiError(401, "unauthorized", "Log in to continue.")
+    user = db.get(User, read_token(credentials.credentials))
     if user is None:
-        raise ApiError(
-            401,
-            "unauthorized",
-            "Demo user not found. Run: python -m app.scripts.seed",
-        )
+        raise ApiError(401, "unauthorized", "This account no longer exists. Log in again.")
     return user
 
 
@@ -56,10 +55,12 @@ def get_stream_settings() -> StreamSettings:
     return StreamSettings()
 
 
-def check_stream_token(token: str | None = None) -> str | None:
-    """TEMPORARY: the browser's EventSource cannot send headers, so the contract
-    puts the token in the query string. Check it here once login exists."""
-    return token
+def check_stream_token(token: str | None = None) -> int:
+    """The Live Feed's browser connection cannot send headers, so the contract
+    puts the token in the query string. It is checked like any other token."""
+    if not token:
+        raise ApiError(401, "unauthorized", "Log in to continue.")
+    return read_token(token)
 
 
 def get_demo_enabled() -> bool:

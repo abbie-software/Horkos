@@ -7,6 +7,8 @@ job 2003 is "job_2003", so the screens look the same with the real server.
 from app.schemas.payments import SIGNAL_CODES
 
 DEMO_USER = {"email": "amara@example.com", "name": "Amara"}
+# The login shown in the API contract. Change it for anything shared.
+DEMO_PASSWORD = "demo-password"
 
 DEMO_OATH = (
     "Spend up to $50 per job and $100 per day. Only on coding work. "
