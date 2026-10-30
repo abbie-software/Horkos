@@ -5,17 +5,17 @@ Revises: de8f846b8465
 Create Date: 2026-10-22 14:15:28.437665
 
 """
-from typing import Sequence, Union
+from collections.abc import Sequence
 
-from alembic import op
 import sqlalchemy as sa
 
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = '02c6ac62a711'
-down_revision: Union[str, Sequence[str], None] = 'de8f846b8465'
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+down_revision: str | Sequence[str] | None = 'de8f846b8465'
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 def upgrade() -> None:
     """Add the jobs table, seller slugs and counters, and the payment details."""

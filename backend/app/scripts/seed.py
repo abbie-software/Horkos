@@ -17,12 +17,14 @@ from app.models import (
 from app.scripts.demo_data import (
     AUDIT,
     DEMO_OATH,
+    DEMO_PASSWORD,
     DEMO_USER,
     JOBS,
     PAYMENTS,
     SELLERS,
 )
 from app.services.oath_store import get_latest_oath, save_oath
+from app.services.passwords import cached_hash
 
 
 def ts(value: str) -> datetime:
@@ -35,10 +37,13 @@ def seed_demo_data(db: Session) -> list[str]:
 
     user = db.scalar(select(User).where(User.email == DEMO_USER["email"]))
     if user is None:
-        user = User(**DEMO_USER)
+        user = User(**DEMO_USER, password_hash=cached_hash(DEMO_PASSWORD))
         db.add(user)
         db.flush()
         added.append("demo user Amara")
+    elif not user.password_hash:
+        user.password_hash = cached_hash(DEMO_PASSWORD)
+        added.append("demo login")
 
     if get_latest_oath(db, user.id) is None:
         save_oath(db, user.id, DEMO_OATH)
