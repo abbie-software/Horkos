@@ -18,6 +18,7 @@ import type {
   AuditEntry,
   CreateJobResponse,
   HorkosEvent,
+  Job,
   ListResponse,
   LoginResponse,
   Oath,
@@ -247,4 +248,42 @@ export function subscribeToEvents(
     }
   };
   return () => source.close();
+}
+
+// ASSUMED endpoint: GET /jobs?seller_id=...&status=awaiting_work (not confirmed with the backend yet)
+export async function getJobs(sellerId: string): Promise<ListResponse<Job>> {
+  if (USE_MOCKS) {
+    await wait(300);
+    const base: Job = {
+      id: "job_2002",
+      request_text: "Write a Python function that converts a CSV file into JSON.",
+      category: "coding",
+      status: "awaiting_work",
+      seller_id: "sel_kip",
+      payment_id: "pay_1002",
+      acceptance_tests: [
+        "Function csv_to_json(path) converts a simple CSV with a header row",
+        "Handles empty fields",
+        "Raises a clear error on an empty file",
+      ],
+      created_at: "2026-10-20T09:00:00Z",
+    };
+    const other: Job = {
+      ...base,
+      id: "job_2004",
+      seller_id: "sel_nova",
+      payment_id: "pay_1004",
+      request_text: "Write a Python function that removes duplicate rows from a list of dictionaries.",
+      acceptance_tests: [
+        "Function dedupe_rows(rows) keeps the first copy of each duplicate",
+        "Keeps the original order",
+        "Returns an empty list for an empty input",
+      ],
+    };
+    const items = [base, other].filter((j) => j.seller_id === sellerId);
+    return { items, total: items.length };
+  }
+  return request<ListResponse<Job>>(
+    `/jobs?seller_id=${encodeURIComponent(sellerId)}&status=awaiting_work`
+  );
 }
