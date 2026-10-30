@@ -10,7 +10,8 @@ export default function MarketingHeader() {
         <span className="font-serif text-xl font-semibold tracking-wide">Horkos</span>
       </Link>
       <nav className="flex items-center gap-5 text-sm font-medium">
-        <Link href="/about">About</Link>
+                <Link href="/seller">For sellers</Link>
+                <Link href="/about">About</Link>
         <ThemeToggle />
         <Link
           href="/money-tracker"
