@@ -5,11 +5,12 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Menu, X } from "lucide-react";
 import { navItems } from "@/lib/nav";
-//import { mockUser } from "@/lib/mock-data";
+import { useAuth } from "@/components/AuthProvider";
 import ThemeToggle from "./ThemeToggle";
 import { Mark } from "@/components/brand/Logo";
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
+  const { user, signOut } = useAuth();
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
 
@@ -89,11 +90,18 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         <div className="flex items-center justify-between border-t border-sidebar-active p-4">
           <div className="flex items-center gap-3">
             <div className="flex h-9 w-9 items-center justify-center rounded-full bg-accent text-sm font-semibold text-sidebar-foreground">
-              {/* {mockUser.name.charAt(0)} */}
+              {user?.name.charAt(0) ?? ""}
             </div>
             <div className="leading-tight">
-              <p className="text-sm font-medium text-sidebar-foreground">{/* {mockUser.name} */}</p>
-              <p className="text-xs text-sidebar-muted">Buyer</p>
+              <p className="text-sm font-medium text-sidebar-foreground">{user?.name ?? ""}</p>
+              <p className="text-xs text-sidebar-muted">{user?.email ?? ""}</p>
+                            <button
+                type="button"
+                onClick={signOut}
+                className="mt-0.5 text-xs text-sidebar-muted underline active:scale-[0.97]"
+              >
+                Sign out
+              </button>
             </div>
           </div>
           <ThemeToggle variant="sidebar" />
