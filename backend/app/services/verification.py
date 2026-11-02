@@ -33,14 +33,46 @@ def refund_reason(result: SandboxResult) -> str:
     return sentence(result.output_excerpt)
 
 
+def move_the_money(
+    session_factory: Callable[[], Session],
+    submission_id: int,
+    result: SandboxResult,
+    funder: Funder,
+) -> None:
+    """Capture and pay the seller, or give the buyer their money back.
+
+    Each step is saved the moment it is done, so a retry after a failure picks
+    up where it stopped and never repeats a step that already moved money.
+    """
+    if result.status == "error":
+        return  # no verdict, so no money moves
+    with session_factory() as db:
+        submission = db.get(Submission, submission_id)
+        job = db.get(Job, submission.job_id)
+        seller = db.get(Seller, submission.seller_id)
+        payment = payment_for_job(db, job.id)
+        if payment is None or payment.state != PaymentState.HELD:
+            raise RuntimeError("The payment is not being held, so it cannot be settled.")
+
+        if result.status == "passed":
+            if not payment.paypal_capture_id:
+                payment.paypal_capture_id = funder.capture(payment)
+                db.commit()
+            if not payment.payout_ref:
+                payment.payout_ref = funder.payout(payment, seller)
+                db.commit()
+        elif not payment.refund_ref:
+            payment.refund_ref = funder.refund(payment)
+            db.commit()
+
+
 def apply_verification(
     db: Session,
     submission_id: int,
     result: SandboxResult,
-    funder: Funder,
     now: datetime,
 ) -> None:
-    """Move the money and update the seller, once the work has been checked.
+    """Record the outcome in the books, once the money has moved.
 
     The caller commits, so everything here is saved together or not at all.
     """
@@ -75,6 +107,8 @@ def apply_verification(
     seller.last_activity_at = now
     record_check(db, payment, seller, result)
     if result.status == "passed":
+        if not payment.payout_ref:
+            raise RuntimeError("The seller has not been paid yet, so it cannot be recorded.")
         move(
             db,
             payment,
@@ -82,7 +116,6 @@ def apply_verification(
             PaymentState.VERIFIED,
             f"{result.passed} of {result.total} tests passed.",
         )
-        payment.payout_ref = funder.release(payment)
         old, new = apply_outcome(seller, passed=True)
         move(
             db,
@@ -95,8 +128,9 @@ def apply_verification(
         submission.status = "passed"
         job.status = "completed"
     else:
+        if not payment.refund_ref:
+            raise RuntimeError("The buyer has not been refunded yet, so it cannot be recorded.")
         old, new = apply_outcome(seller, passed=False)
-        payment.refund_ref = funder.refund(payment)
         move(
             db,
             payment,
@@ -144,9 +178,10 @@ def verify_submission(
             content, test_code = submission.content, job.test_code or ""
 
         result = runner(content, test_code)
+        move_the_money(session_factory, submission_id, result, funder)
 
         with session_factory() as db:
-            apply_verification(db, submission_id, result, funder, now or datetime.now(UTC))
+            apply_verification(db, submission_id, result, now or datetime.now(UTC))
             db.commit()
     except Exception:
         log.exception("Verification failed part-way")

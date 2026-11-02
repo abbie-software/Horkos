@@ -9,7 +9,6 @@ from app.deps import (
     check_demo_enabled,
     get_attack_pause,
     get_current_user,
-    get_funder,
     get_runner,
     get_session_factory,
 )
@@ -18,7 +17,7 @@ from app.services.activity import record_event
 from app.services.attack_scripts import ATTACKS
 from app.services.attacks import run_attack
 from app.services.demo import attacks_so_far, reset_demo_data
-from app.services.funding import Funder
+from app.services.funding import SimulatedFunder
 from app.services.sandbox import SandboxResult
 
 router = APIRouter(
@@ -29,7 +28,6 @@ router = APIRouter(
 DbSession = Annotated[Session, Depends(get_db)]
 Factory = Annotated[Callable[[], Session], Depends(get_session_factory)]
 Runner = Annotated[Callable[[str, str], SandboxResult], Depends(get_runner)]
-FunderDep = Annotated[Funder, Depends(get_funder)]
 Pause = Annotated[float, Depends(get_attack_pause)]
 
 
@@ -40,7 +38,6 @@ def start_attack(
     db: DbSession,
     factory: Factory,
     runner: Runner,
-    funder: FunderDep,
     pause: Pause,
 ):
     """Play the Red Team: a bad agent tries something and the Guard responds.
@@ -53,7 +50,8 @@ def start_attack(
         {"attack": attack_type},
     )
     db.commit()
-    background.add_task(run_attack, factory, attack_type, runner, funder, pause)
+    # The Red Team always plays with simulated money: it cannot click "approve" on PayPal.
+    background.add_task(run_attack, factory, attack_type, runner, SimulatedFunder(), pause)
     return AttackAccepted(attack_id=f"atk_{4000 + number}", type=attack_type)
 
 

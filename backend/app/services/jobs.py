@@ -1,4 +1,5 @@
 import json
+import logging
 from datetime import UTC, datetime, timedelta
 from typing import Literal
 
@@ -11,12 +12,13 @@ from app.schemas.oath import Policy
 from app.schemas.payments import DecisionOut
 from app.services.activity import (
     move,
+    record_audit,
     record_proposal,
     record_user_choice,
     record_verdict,
 )
 from app.services.buyer_agent import BuyerAgent, BuyerAgentError
-from app.services.funding import Funder
+from app.services.funding import Funder, FundingError, NotApprovedYet
 from app.services.guard import IntentChecker, safe_review
 from app.services.hard_rules import Proposal, SellerFacts, dollars
 from app.services.ledger import create_payment
@@ -24,6 +26,8 @@ from app.services.messages import BLOCK_NOTES
 from app.services.oath_store import get_latest_oath
 from app.services.seller_choice import pick_seller
 from app.services.signals import Activity
+
+log = logging.getLogger(__name__)
 
 VELOCITY_WINDOW_MINUTES = 10
 
@@ -91,13 +95,67 @@ def block_note(decision: DecisionOut) -> str:
     return f"Guard blocked: the risk score is {decision.risk_score} out of 100."
 
 
-def hold_funds(
+def begin_funding(
     db: Session, payment: Payment, job: Job | None, seller: Seller, funder: Funder
 ) -> None:
-    payment.paypal_authorization_id = funder.hold(payment)
+    """Start securing the buyer's money for an approved payment.
+
+    A simulated funder holds it straight away. The PayPal funder cannot: the
+    buyer has to approve it on PayPal first, so the payment waits in the
+    approved state with a link for the buyer.
+    """
+    try:
+        start = funder.start(payment, seller)
+    except FundingError as exc:
+        log.exception("Funding could not start")
+        raise ApiError(
+            500, "server_error", "PayPal could not start this payment. Please try again."
+        ) from exc
+
+    if start.held:
+        payment.paypal_authorization_id = start.ref
+        move(db, payment, seller, PaymentState.HELD, "Funds secured.")
+        if job is not None:
+            job.status = "awaiting_work"
+        return
+
+    payment.paypal_order_id = start.ref
+    payment.approve_url = start.approve_url
+    record_audit(
+        db,
+        payment,
+        "system",
+        "Asked the buyer to fund the payment",
+        "Waiting for the buyer to approve the payment on PayPal.",
+        details={"order_id": start.ref},
+    )
+
+
+def confirm_funding(db: Session, payment: Payment, funder: Funder) -> Payment:
+    """The buyer approved on PayPal: place the hold and start the job."""
+    if payment.state != PaymentState.APPROVED or not payment.paypal_order_id:
+        raise ApiError(409, "invalid_state", "This payment is not waiting for funding.")
+
+    try:
+        authorization = funder.confirm(payment)
+    except NotApprovedYet as exc:
+        raise ApiError(
+            422, "validation_error", "The buyer has not approved this payment on PayPal yet."
+        ) from exc
+    except FundingError as exc:
+        log.exception("Funding could not be confirmed")
+        raise ApiError(
+            500, "server_error", "PayPal could not secure the funds. Please try again."
+        ) from exc
+
+    seller = db.get(Seller, payment.seller_id)
+    job = db.get(Job, payment.job_id) if payment.job_id else None
+    payment.paypal_authorization_id = authorization
+    payment.approve_url = None
     move(db, payment, seller, PaymentState.HELD, "Funds secured.")
     if job is not None:
         job.status = "awaiting_work"
+    return payment
 
 
 def apply_verdict(
@@ -127,7 +185,7 @@ def apply_verdict(
             PaymentState.APPROVED,
             f"Guard approved ({decision.risk_level} risk).",
         )
-        hold_funds(db, payment, job, seller, funder)
+        begin_funding(db, payment, job, seller, funder)
 
 
 def run_job(
@@ -228,7 +286,7 @@ def decide_payment(
     record_user_choice(db, payment, approved)
     if approved:
         move(db, payment, seller, PaymentState.APPROVED, "You approved the payment.")
-        hold_funds(db, payment, job, seller, funder)
+        begin_funding(db, payment, job, seller, funder)
     else:
         move(db, payment, seller, PaymentState.BLOCKED, "You rejected the payment.")
         if job is not None:

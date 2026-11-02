@@ -76,6 +76,7 @@ def payment_to_out(
             funding_ref=payment.paypal_authorization_id or payment.paypal_order_id,
             payout_ref=payment.payout_ref,
             refund_ref=payment.refund_ref,
+            approve_url=payment.approve_url,
         ),
         created_at=as_utc(payment.created_at),
         updated_at=as_utc(payment.updated_at),
@@ -90,6 +91,7 @@ def load_payment_out(db: Session, payment: Payment) -> PaymentOut:
         .order_by(PaymentEvent.id)
     ).all()
     return payment_to_out(payment, seller, list(events))
+
 
 def job_to_out(job: Job, seller: Seller, payment_id: int | None) -> JobOut:
     return JobOut(

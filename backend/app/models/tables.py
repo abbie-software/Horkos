@@ -105,6 +105,9 @@ class Payment(Base):
     decision_json: Mapped[str | None] = mapped_column(Text)
     paypal_order_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
     paypal_authorization_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    paypal_capture_id: Mapped[str | None] = mapped_column(String(64))
+    # Where the buyer approves the hold on PayPal. Cleared once the money is held.
+    approve_url: Mapped[str | None] = mapped_column(Text)
     payout_ref: Mapped[str | None] = mapped_column(String(64))
     refund_ref: Mapped[str | None] = mapped_column(String(64))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
