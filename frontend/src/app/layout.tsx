@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Instrument_Sans, Newsreader, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
+import { AuthProvider } from "@/components/AuthProvider";
 
 
 const sans = Instrument_Sans({ subsets: ["latin"], variable: "--font-instrument" });
@@ -44,7 +45,9 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
       <body className="font-sans antialiased">
-        {children}
+        <AuthProvider>
+          {children}
+        </AuthProvider>
       </body>
     </html>
   );

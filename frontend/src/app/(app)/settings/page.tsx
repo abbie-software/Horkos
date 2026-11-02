@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import PageHeader from "@/components/PageHeader";
 import { resetDemo } from "@/lib/api";
+import { useAuth } from "@/components/AuthProvider";
 
 type Mode = "light" | "dark" | "system";
 
@@ -18,6 +19,7 @@ function applyTheme(mode: Mode) {
 }
 
 export default function SettingsPage() {
+  const { user } = useAuth();
   const [mode, setMode] = useState<Mode>("system");
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<string | null>(null);
@@ -99,7 +101,7 @@ export default function SettingsPage() {
 
         <section className="p-5">
           <h2 className="font-serif text-lg font-semibold">Account</h2>
-          <p className="text-sm text-muted">Sign-in is not set up yet. You are using the demo account.</p>
+          <p className="text-sm text-muted">Signed in as {user?.name} ({user?.email}).</p>
         </section>
       </div>
     </>

@@ -34,6 +34,10 @@ let token: string | null = null;
 export function setToken(value: string | null) {
   token = value;
 }
+let unauthorizedHandler: (() => void) | null = null;
+export function setUnauthorizedHandler(fn: (() => void) | null) {
+  unauthorizedHandler = fn;
+}
 
 const wait = (ms = 300) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -62,6 +66,7 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
     },
   });
     if (!res.ok) {
+          if (res.status === 401 && path !== "/auth/login") unauthorizedHandler?.();
     let message = `Request failed (${res.status})`;
     let code: string | null = null;
     try {
