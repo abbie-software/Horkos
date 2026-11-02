@@ -103,8 +103,12 @@ def test_payment_waiting_for_the_user(client):
     triggered = {s["code"] for s in body["decision"]["signals"] if s["triggered"]}
     assert triggered == {"unproven_seller", "edge_of_limit"}
     assert [h["status"] for h in body["history"]] == ["proposed", "awaiting_user"]
-    assert body["paypal"] == {"funding_ref": None, "payout_ref": None, "refund_ref": None}
-
+    assert body["paypal"] == {
+        "funding_ref": None,
+        "payout_ref": None,
+        "refund_ref": None,
+        "approve_url": None,
+    }
 
 def test_released_payment_has_its_history_and_paypal_refs(client):
     body = client.get("/payments/pay_1001").json()

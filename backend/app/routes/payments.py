@@ -11,7 +11,7 @@ from app.models import Payment, PaymentState, User
 from app.schemas.jobs import DecisionIn
 from app.schemas.payments import PaymentList, PaymentOut, PaymentStatus
 from app.services.funding import Funder
-from app.services.jobs import decide_payment
+from app.services.jobs import confirm_funding, decide_payment
 from app.services.views import load_payment_out
 
 router = APIRouter(tags=["payments"])
@@ -67,5 +67,14 @@ def decide(
 ):
     payment = find_payment(db, user, payment_id)
     decide_payment(db, payment, body.decision, funder)
+    db.commit()
+    return load_payment_out(db, payment)
+
+
+@router.post("/payments/{payment_id}/funding/confirm", response_model=PaymentOut)
+def confirm(payment_id: str, db: DbSession, user: CurrentUser, funder: FunderDep):
+    """After the buyer approved the payment on PayPal: place the hold."""
+    payment = find_payment(db, user, payment_id)
+    confirm_funding(db, payment, funder)
     db.commit()
     return load_payment_out(db, payment)

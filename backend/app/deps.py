@@ -9,8 +9,9 @@ from app.database import SessionLocal, get_db
 from app.errors import ApiError
 from app.models import User
 from app.services.buyer_agent import GeminiBuyerAgent
-from app.services.funding import SimulatedFunder
+from app.services.funding import Funder, SimulatedFunder
 from app.services.intent import GeminiIntentChecker
+from app.services.paypal_funder import PayPalFunder
 from app.services.sandbox import run_in_sandbox
 from app.services.streaming import StreamSettings
 from app.services.tokens import read_token
@@ -39,7 +40,10 @@ def get_intent_checker() -> GeminiIntentChecker:
     return GeminiIntentChecker()
 
 
-def get_funder() -> SimulatedFunder:
+def get_funder() -> Funder:
+    """Real PayPal sandbox money when PAYPAL_FUNDING=sandbox, otherwise simulated."""
+    if settings.paypal_funding == "sandbox":
+        return PayPalFunder()
     return SimulatedFunder()
 
 

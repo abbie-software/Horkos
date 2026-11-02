@@ -63,6 +63,8 @@ class PaypalRefs(BaseModel):
     funding_ref: str | None
     payout_ref: str | None
     refund_ref: str | None
+    # Where the buyer approves the hold on PayPal. Only set while waiting for funding.
+    approve_url: str | None = None
 
 
 class PaymentOut(BaseModel):
