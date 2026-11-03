@@ -7,6 +7,7 @@ import { useSeller } from "@/components/seller/useSeller";
 import { formatUSD, getJobs, getSellers, submitWork } from "@/lib/api";
 import { initials } from "@/lib/format";
 import type { Job, Seller } from "@/lib/types";
+import { useAuth } from "@/components/AuthProvider";
 
 const errorText = (e: unknown) =>
   e instanceof Error ? e.message : "Something went wrong. Please try again.";
@@ -87,7 +88,7 @@ function SellerPicker({ onChoose }: { onChoose: (id: string) => void }) {
   );
 }
 
-function Workspace({ sellerId, onSwitch }: { sellerId: string; onSwitch: () => void }) {
+function Workspace({ sellerId, onSwitch, actionLabel }: { sellerId: string; onSwitch: () => void; actionLabel: string }) {
   const [seller, setSeller] = useState<Seller | null>(null);
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
@@ -147,7 +148,7 @@ function Workspace({ sellerId, onSwitch }: { sellerId: string; onSwitch: () => v
           onClick={onSwitch}
           className="rounded-full border border-border px-4 py-2 text-sm font-medium active:scale-[0.97]"
         >
-          Switch seller
+          {actionLabel}
         </button>
       </div>
 
@@ -237,10 +238,37 @@ function Workspace({ sellerId, onSwitch }: { sellerId: string; onSwitch: () => v
 }
 
 export default function SellerPage() {
-  const { sellerId, ready, choose } = useSeller();
-  if (!ready) return null;
+  const { user, ready, signOut } = useAuth();
+  const { sellerId, ready: pickReady, choose } = useSeller();
+  const live = process.env.NEXT_PUBLIC_USE_MOCKS === "false";
+  if (!ready || !pickReady) return null;
+
+  // A signed-in seller account: use their own seller record
+  if (user?.role === "seller" && user.seller_id) {
+    return <Workspace sellerId={user.seller_id} onSwitch={signOut} actionLabel="Sign out" />;
+  }
+
+  // Real backend: only seller accounts may use this page
+  if (live) {
+    return (
+      <div className="max-w-md space-y-4">
+        <h1 className="font-serif text-3xl tracking-tight">Seller sign-in needed</h1>
+        <p className="text-sm text-muted">
+          This area is for seller accounts. Sign in with one to see your jobs.
+        </p>
+        <Link
+          href="/login?next=/seller"
+          className="inline-flex rounded-full bg-brand px-6 py-3 text-sm font-semibold text-brand-foreground active:scale-[0.97]"
+        >
+          Sign in
+        </Link>
+      </div>
+    );
+  }
+
+  // Sample-data mode: keep the picker so you can preview the page
   return sellerId ? (
-    <Workspace sellerId={sellerId} onSwitch={() => choose(null)} />
+    <Workspace sellerId={sellerId} onSwitch={() => choose(null)} actionLabel="Switch seller" />
   ) : (
     <SellerPicker onChoose={choose} />
   );
