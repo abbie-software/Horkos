@@ -212,6 +212,20 @@ export default function PaymentDetail({
             Reject
           </button>
         </div>
+          )}
+          {payment.status === "approved" && payment.paypal.approve_url && (
+        <div className="space-y-3 rounded-xl bg-foreground/5 p-4">
+          <p className="text-sm">
+            Approved by the Guard. The next step is to fund this payment on
+            PayPal’s sandbox. You will come back here afterwards.
+          </p>
+          <a
+            href={payment.paypal.approve_url}
+            className="inline-flex rounded-full bg-brand px-6 py-3 text-sm font-semibold text-brand-foreground active:scale-[0.97]"
+          >
+            Fund this payment
+          </a>
+        </div>
       )}
     </div>
   );

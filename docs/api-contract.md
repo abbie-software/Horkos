@@ -242,33 +242,15 @@ Request:
 `decision` is `"approve"` or `"reject"`. Response `200`: the updated Payment. Approving moves it to `approved` and then `held`; rejecting moves it to `blocked`.
 
 ---
+### 3.5a `POST /payments/{id}/funding/confirm`
 
-### 3.5a `GET /jobs?status=`
+Called when the buyer returns from PayPal. The return page reads `?payment=pay_...`. Returns the updated Payment.
 
-Returns the authenticated user's visible jobs, newest first, as `{ "items": [...], "total": 12 }`. The optional `status` query filters by job status: `open`, `awaiting_work`, `verifying`, `completed`, `failed` or `cancelled`.
-
-Buyers see only jobs they created. Sellers see only jobs assigned to their seller account. Job responses do not include test code.
-
-Each item is a job object:
-```json
-{
-  "id": "job_2003",
-  "request_text": "Write a Python function that converts a CSV file into JSON.",
-  "category": "coding",
-  "status": "open",
-  "seller_id": "sel_zed",
-  "payment_id": "pay_1003",
-  "acceptance_tests": [
-    "Converts a simple CSV with a header row",
-    "Handles empty fields"
-  ],
-  "created_at": "2026-10-20T10:00:00Z"
-}
-```
-`payment_id` is nullable.
-
----
-
+| HTTP | `code` | When |
+|---|---|---|
+| 422 | `validation_error` | The buyer has not approved on PayPal |
+| 409 | `invalid_state` | The payment is not waiting for funding |
+| 500 | `server_error` | PayPal failed |
 ### 3.6 `POST /jobs/{id}/submission`
 
 The seller hands in their work. Verification takes a while, so the call returns immediately and the result arrives through the Live Feed and `GET /payments/{id}`.
