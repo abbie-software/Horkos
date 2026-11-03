@@ -204,11 +204,13 @@ Returned by `GET /payments`, `GET /payments/{id}` and inside `POST /jobs`.
     { "status": "proposed",      "at": "2026-10-20T10:00:00Z", "note": "Buyer Agent proposed paying $25.00 to Zed Dev." },
     { "status": "awaiting_user", "at": "2026-10-20T10:00:03Z", "note": "Guard asked the user to decide." }
   ],
-  "paypal": { "funding_ref": null, "payout_ref": null, "refund_ref": null },
+  "paypal": { "approve_url": null, "funding_ref": null, "payout_ref": null, "refund_ref": null },
   "created_at": "2026-10-20T10:00:00Z",
   "updated_at": "2026-10-20T10:00:03Z"
 }
 ```
+
+`approve_url` is nullable. It is set only while a payment is waiting for funding in sandbox mode. A payment with status `approved` and an `approve_url` needs the buyer to fund it.
 
 A blocked payment looks the same, with `status: "blocked"`, `decision.verdict: "block"` and `decision.hard_rule` set, for example:
 ```json
@@ -232,7 +234,15 @@ Request:
 `decision` is `"approve"` or `"reject"`. Response `200`: the updated Payment. Approving moves it to `approved` and then `held`; rejecting moves it to `blocked`.
 
 ---
+### 3.5a `POST /payments/{id}/funding/confirm`
 
+Called when the buyer returns from PayPal. The return page reads `?payment=pay_...`. Returns the updated Payment.
+
+| HTTP | `code` | When |
+|---|---|---|
+| 422 | `validation_error` | The buyer has not approved on PayPal |
+| 409 | `invalid_state` | The payment is not waiting for funding |
+| 500 | `server_error` | PayPal failed |
 ### 3.6 `POST /jobs/{id}/submission`
 
 The seller hands in their work. Verification takes a while, so the call returns immediately and the result arrives through the Live Feed and `GET /payments/{id}`.
@@ -377,4 +387,3 @@ The outcome arrives through the Live Feed (a `demo.attack_started` event, then `
 The frontend's `mock-data.ts` shows the same data as complete payments, audit entries and events.
 
 ---
-
