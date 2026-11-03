@@ -87,6 +87,7 @@ If the Guard errors, times out or is unsure, the payment goes to `awaiting_user`
 | Login | `POST /auth/login` | Demo login |
 | Oath | `GET /oath`, `PUT /oath` | Read and save the user's rules |
 | Start a job | `POST /jobs` | User makes a request; the Buyer Agent proposes a payment |
+| Jobs | `GET /jobs?status=` | List jobs visible to the authenticated user |
 | Money Tracker | `GET /payments`, `GET /payments/{id}` | List payments, and one payment with its history |
 | Ask pop-up | `POST /payments/{id}/decision` | User approves or rejects an "ask" |
 | Seller page | `POST /jobs/{id}/submission` | Seller hands in work |
@@ -108,9 +109,16 @@ Response `200`:
 {
   "access_token": "eyJhbGciOi...",
   "token_type": "bearer",
-  "user": { "id": "usr_amara", "name": "Amara", "email": "amara@example.com" }
+  "user": {
+    "id": "usr_amara",
+    "name": "Amara",
+    "email": "amara@example.com",
+    "role": "buyer",
+    "seller_id": null
+  }
 }
 ```
+`user.role` is `"buyer"` or `"seller"`. `user.seller_id` is a string for a seller account, or `null` for a buyer.
 
 ---
 

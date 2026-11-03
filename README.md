@@ -260,6 +260,7 @@ The API runs at `http://localhost:8000`. Interactive API docs are at `http://loc
 
 ### 3. Start the frontend
 
+Copy `frontend/.env.example` to `frontend/.env.local`. With `NEXT_PUBLIC_USE_MOCKS=false` the screens use the real backend. If the setting is missing or `true`, they show built-in sample data. If you deploy anywhere, update `FRONTEND_ORIGIN` in the backend `.env` so it allows your site.
 ```bash
 cd frontend
 npm install
@@ -368,6 +369,7 @@ We want to be upfront about what Horkos is and is not.
 - **The blocklist rule is built but inactive** until blocklist storage is added.
 - **Funding is simulated** until the PayPal pay and refund work is finished.
 - **Seller submissions are not authenticated yet.** There is no separate seller login, so anyone can submit work as any seller in this demo.
+- **Payout status:** a payout that is still PENDING after about 15 seconds counts as paid. This is low risk in the sandbox and would need a proper status check in production.
 
 ## Roadmap
 
