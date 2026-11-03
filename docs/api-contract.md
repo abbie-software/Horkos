@@ -87,6 +87,7 @@ If the Guard errors, times out or is unsure, the payment goes to `awaiting_user`
 | Login | `POST /auth/login` | Demo login |
 | Oath | `GET /oath`, `PUT /oath` | Read and save the user's rules |
 | Start a job | `POST /jobs` | User makes a request; the Buyer Agent proposes a payment |
+| Jobs | `GET /jobs?status=` | List jobs visible to the authenticated user |
 | Money Tracker | `GET /payments`, `GET /payments/{id}` | List payments, and one payment with its history |
 | Ask pop-up | `POST /payments/{id}/decision` | User approves or rejects an "ask" |
 | Seller page | `POST /jobs/{id}/submission` | Seller hands in work |
@@ -108,9 +109,16 @@ Response `200`:
 {
   "access_token": "eyJhbGciOi...",
   "token_type": "bearer",
-  "user": { "id": "usr_amara", "name": "Amara", "email": "amara@example.com" }
+  "user": {
+    "id": "usr_amara",
+    "name": "Amara",
+    "email": "amara@example.com",
+    "role": "buyer",
+    "seller_id": null
+  }
 }
 ```
+`user.role` is `"buyer"` or `"seller"`. `user.seller_id` is a string for a seller account, or `null` for a buyer.
 
 ---
 
@@ -204,11 +212,13 @@ Returned by `GET /payments`, `GET /payments/{id}` and inside `POST /jobs`.
     { "status": "proposed",      "at": "2026-10-20T10:00:00Z", "note": "Buyer Agent proposed paying $25.00 to Zed Dev." },
     { "status": "awaiting_user", "at": "2026-10-20T10:00:03Z", "note": "Guard asked the user to decide." }
   ],
-  "paypal": { "funding_ref": null, "payout_ref": null, "refund_ref": null },
+  "paypal": { "approve_url": null, "funding_ref": null, "payout_ref": null, "refund_ref": null },
   "created_at": "2026-10-20T10:00:00Z",
   "updated_at": "2026-10-20T10:00:03Z"
 }
 ```
+
+`approve_url` is nullable. It is set only while a payment is waiting for funding in sandbox mode. A payment with status `approved` and an `approve_url` needs the buyer to fund it.
 
 A blocked payment looks the same, with `status: "blocked"`, `decision.verdict: "block"` and `decision.hard_rule` set, for example:
 ```json
@@ -230,6 +240,32 @@ Request:
 { "decision": "approve" }
 ```
 `decision` is `"approve"` or `"reject"`. Response `200`: the updated Payment. Approving moves it to `approved` and then `held`; rejecting moves it to `blocked`.
+
+---
+
+### 3.5a `GET /jobs?status=`
+
+Returns the authenticated user's visible jobs, newest first, as `{ "items": [...], "total": 12 }`. The optional `status` query filters by job status: `open`, `awaiting_work`, `verifying`, `completed`, `failed` or `cancelled`.
+
+Buyers see only jobs they created. Sellers see only jobs assigned to their seller account. Job responses do not include test code.
+
+Each item is a job object:
+```json
+{
+  "id": "job_2003",
+  "request_text": "Write a Python function that converts a CSV file into JSON.",
+  "category": "coding",
+  "status": "open",
+  "seller_id": "sel_zed",
+  "payment_id": "pay_1003",
+  "acceptance_tests": [
+    "Converts a simple CSV with a header row",
+    "Handles empty fields"
+  ],
+  "created_at": "2026-10-20T10:00:00Z"
+}
+```
+`payment_id` is nullable.
 
 ---
 
@@ -377,4 +413,3 @@ The outcome arrives through the Live Feed (a `demo.attack_started` event, then `
 The frontend's `mock-data.ts` shows the same data as complete payments, audit entries and events.
 
 ---
-
