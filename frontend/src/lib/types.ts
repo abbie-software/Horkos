@@ -128,8 +128,7 @@ export interface Payment {
   status: PaymentStatus;
   decision: Decision;
   history: Transition[];
-  paypal: PaypalRefs;
-  approve_url?: string | null; // set only while a payment waits for funding (sandbox mode)
+  paypal: PaypalRefs & { approve_url?: string | null }; // set only while a payment waits for funding (sandbox mode)
   created_at: string;
   updated_at: string;
 }

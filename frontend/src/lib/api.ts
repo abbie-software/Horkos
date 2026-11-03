@@ -151,8 +151,12 @@ export async function decidePayment(id: string, decision: "approve" | "reject"):
     await wait(500);
     const found = mockPayments.find((p) => p.id === id);
     if (!found) throw new Error("Payment not found");
-    return { ...found, status: decision === "approve" ? "approved" : "blocked" };
-  }
+    if (decision === "reject") return { ...found, status: "blocked" };
+    return {
+      ...found,
+      status: "approved",
+      paypal: { ...found.paypal, approve_url: `/funding/return?payment=${id}` },
+    };  }
   return request<Payment>(`/payments/${id}/decision`, {
     method: "POST",
     body: JSON.stringify({ decision }),
@@ -291,4 +295,19 @@ export async function getJobs(sellerId: string): Promise<ListResponse<Job>> {
   return request<ListResponse<Job>>(
     `/jobs?seller_id=${encodeURIComponent(sellerId)}&status=awaiting_work`
   );
+}
+
+// POST /payments/{id}/funding/confirm. Call it when the buyer returns from PayPal.
+export async function confirmFunding(id: string): Promise<Payment> {
+  if (USE_MOCKS) {
+    await wait(700);
+    const found = mockPayments.find((p) => p.id === id);
+    if (!found) throw new Error("Payment not found");
+    return {
+      ...found,
+      status: "held",
+      paypal: { ...found.paypal, funding_ref: `MOCK-FUND-${id}`, approve_url: null },
+    };
+  }
+  return request<Payment>(`/payments/${id}/funding/confirm`, { method: "POST" });
 }
