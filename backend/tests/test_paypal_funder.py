@@ -1,5 +1,6 @@
 from types import SimpleNamespace
 
+import httpx
 from paypalserversdk.exceptions.api_exception import ApiException
 from paypalserversdk.models.checkout_payment_intent import CheckoutPaymentIntent
 
@@ -108,6 +109,22 @@ class FakeHttp:
             {"batch_header": {"batch_status": batch}, "items": [{"transaction_status": item}]},
         )
 
+class DroppedPollHttp(FakeHttp):
+    """The first status check fails, as when PayPal closes an idle connection."""
+
+    def __init__(self):
+        super().__init__()
+        self.dropped = False
+
+    def get(self, url, **kwargs):
+        if not self.dropped:
+            self.dropped = True
+            raise httpx.RemoteProtocolError("Server disconnected without sending a response.")
+        return super().get(url, **kwargs)
+
+
+def test_a_dropped_status_check_does_not_lose_a_payout_that_already_exists():
+    assert funder(http=DroppedPollHttp()).payout(PAYMENT, SELLER) == "BATCH-1"
 
 def funder(sdk=None, http=None):
     slept = []
