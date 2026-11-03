@@ -21,6 +21,7 @@ from app.scripts.demo_data import (
     DEMO_USER,
     JOBS,
     PAYMENTS,
+    SELLER_LOGINS,
     SELLERS,
 )
 from app.services.oath_store import get_latest_oath, save_oath
@@ -68,7 +69,20 @@ def seed_demo_data(db: Session) -> list[str]:
             db.flush()
             added.append(f"seller {data['name']}")
         sellers[data["slug"]] = seller
-
+    for login in SELLER_LOGINS:
+        if db.scalar(select(User).where(User.email == login["email"])) is None:
+            seller = sellers[login["slug"]]
+            db.add(
+                User(
+                    email=login["email"],
+                    name=seller.name,
+                    role="seller",
+                    seller_id=seller.id,
+                    password_hash=cached_hash(DEMO_PASSWORD),
+                )
+            )
+            added.append(f"login for {seller.name}")
+    db.flush()
     request_text_by_job = {job["id"]: job["request_text"] for job in JOBS}
     for data in JOBS:
         job = db.get(Job, data["id"])

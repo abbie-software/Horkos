@@ -31,6 +31,8 @@ class User(Base):
     name: Mapped[str] = mapped_column(String(120))
     # A salted scrypt hash. The password itself is never stored.
     password_hash: Mapped[str | None] = mapped_column(String(255))
+    role: Mapped[str] = mapped_column(String(10), default="buyer", server_default="buyer")
+    seller_id: Mapped[int | None] = mapped_column(ForeignKey("sellers.id"), unique=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
 

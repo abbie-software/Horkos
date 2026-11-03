@@ -31,6 +31,9 @@ class JobOut(BaseModel):
     acceptance_tests: list[str]
     created_at: datetime
 
+class JobList(BaseModel):
+    items: list[JobOut]
+    total: int
 
 class JobCreated(BaseModel):
     job: JobOut

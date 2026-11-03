@@ -15,7 +15,7 @@ from app.models import (
 from app.scripts.seed import seed_demo_data
 
 # Children first, so nothing is deleted while something still points at it.
-CLEARED_IN_ORDER = [AuditEntry, Submission, PaymentEvent, Payment, Job, Oath, Seller, User]
+CLEARED_IN_ORDER = [AuditEntry, Submission, PaymentEvent, Payment, Job, Oath, User, Seller]
 
 
 def attacks_so_far(db: Session) -> int:

@@ -82,7 +82,13 @@ def test_the_demo_user_can_log_in(api):
     assert response.status_code == 200
     body = response.json()
     assert body["token_type"] == "bearer"
-    assert body["user"] == {"id": "usr_amara", "name": "Amara", "email": "amara@example.com"}
+    assert body["user"] == {
+        "id": "usr_amara",
+        "name": "Amara",
+        "email": "amara@example.com",
+        "role": "buyer",
+        "seller_id": None,
+    }
     assert read_token(body["access_token"]) == 1
 
 

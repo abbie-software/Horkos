@@ -7,10 +7,11 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.errors import ApiError
-from app.models import User
+from app.models import Seller, User
 from app.schemas.auth import LoginIn, LoginOut, UserOut
 from app.services.passwords import dummy_hash, verify_password
 from app.services.tokens import issue_token
+from app.services.views import seller_public_id
 
 router = APIRouter(tags=["auth"])
 
@@ -22,6 +23,18 @@ def public_user_id(user: User) -> str:
     return "usr_" + re.sub(r"\W", "", user.name.lower())
 
 
+def user_out(db: Session, user: User) -> UserOut:
+    """The account as the screens see it. A seller account also carries its seller's ID."""
+    seller = db.get(Seller, user.seller_id) if user.seller_id else None
+    return UserOut(
+        id=public_user_id(user),
+        name=user.name,
+        email=user.email,
+        role="seller" if user.role == "seller" else "buyer",
+        seller_id=seller_public_id(seller) if seller else None,
+    )
+
+
 @router.post("/auth/login", response_model=LoginOut)
 def login(body: LoginIn, db: DbSession):
     email = body.email.strip().lower()
@@ -30,7 +43,4 @@ def login(body: LoginIn, db: DbSession):
     stored = user.password_hash if user is not None else dummy_hash()
     if not verify_password(body.password, stored) or user is None:
         raise ApiError(401, "unauthorized", "Wrong email or password.")
-    return LoginOut(
-        access_token=issue_token(user.id),
-        user=UserOut(id=public_user_id(user), name=user.name, email=user.email),
-    )
+    return LoginOut(access_token=issue_token(user.id), user=user_out(db, user))
