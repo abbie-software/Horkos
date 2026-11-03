@@ -12,6 +12,8 @@ class UserOut(BaseModel):
     id: str
     name: str
     email: str
+    role: Literal["buyer", "seller"] = "buyer"
+    seller_id: str | None = None
 
 
 class LoginOut(BaseModel):

@@ -2,6 +2,7 @@ from collections.abc import Callable
 from typing import Annotated
 
 from fastapi import APIRouter, BackgroundTasks, Depends
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -15,7 +16,14 @@ from app.deps import (
 )
 from app.errors import ApiError
 from app.models import Job, PaymentState, Seller, Submission, User
-from app.schemas.jobs import JobCreated, JobIn, SubmissionAccepted, SubmissionIn
+from app.schemas.jobs import (
+    JobCreated,
+    JobIn,
+    JobList,
+    JobStatus,
+    SubmissionAccepted,
+    SubmissionIn,
+)
 from app.services.buyer_agent import BuyerAgent
 from app.services.funding import Funder
 from app.services.guard import IntentChecker
@@ -66,17 +74,44 @@ def create_job(
         payment=load_payment_out(db, payment),
     )
 
+@router.get("/jobs", response_model=JobList)
+def list_jobs(
+    db: DbSession,
+    user: CurrentUser,
+    status: JobStatus | None = None,
+    seller_id: str | None = None,
+):
+    """The jobs the caller may see. A seller account sees only its own seller's jobs,
+    a buyer sees the jobs they created. The tests' code is never included."""
+    query = select(Job).order_by(Job.created_at.desc(), Job.id.desc())
+    if user.role == "seller":
+        query = query.where(Job.seller_id == user.seller_id)
+    else:
+        query = query.where(Job.user_id == user.id)
+    if status is not None:
+        query = query.where(Job.status == status)
+
+    items = []
+    for job in db.scalars(query).all():
+        seller = db.get(Seller, job.seller_id)
+        if seller_id is not None and seller_public_id(seller) != seller_id:
+            continue
+        payment = payment_for_job(db, job.id)
+        items.append(job_to_out(job, seller, payment.id if payment else None))
+    return JobList(items=items, total=len(items))
+
 
 @router.post(
     "/jobs/{job_id}/submission",
     response_model=SubmissionAccepted,
     status_code=202,
-    dependencies=[Depends(get_current_user)],
+  
 )
 def submit_work(
     job_id: str,
     body: SubmissionIn,
     background: BackgroundTasks,
+    user: CurrentUser,
     db: DbSession,
     factory: Factory,
     runner: Runner,
@@ -90,6 +125,12 @@ def submit_work(
         raise ApiError(404, "not_found", "Job not found.")
 
     seller = db.get(Seller, job.seller_id)
+
+    if user.role == "seller" and user.seller_id != job.seller_id:
+        raise ApiError(
+            422, "validation_error", "seller_id: this job belongs to a different seller."
+        )
+    
     if body.seller_id != seller_public_id(seller):
         raise ApiError(
             422, "validation_error", "seller_id: this job belongs to a different seller."

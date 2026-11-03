@@ -10,6 +10,14 @@ DEMO_USER = {"email": "amara@example.com", "name": "Amara"}
 # The login shown in the API contract. Change it for anything shared.
 DEMO_PASSWORD = "demo-password"
 
+# One login per demo seller, so the seller page can run on real accounts.
+SELLER_LOGINS = [
+    {"slug": "sel_nova", "email": "nova@example.com"},
+    {"slug": "sel_kip", "email": "kip@example.com"},
+    {"slug": "sel_zed", "email": "zed@example.com"},
+    {"slug": "sel_quick", "email": "quick@example.com"},
+]
+
 DEMO_OATH = (
     "Spend up to $50 per job and $100 per day. Only on coding work. "
     "Ask me before anything over $30, and always ask me about a seller "
