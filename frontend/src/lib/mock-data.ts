@@ -36,6 +36,8 @@ export const mockUser: User = {
   id: "usr_amara",
   name: "Amara",
   email: "amara@example.com",
+  role: "buyer",
+  seller_id: null,
 };
 
 export const mockOath: Oath = {
