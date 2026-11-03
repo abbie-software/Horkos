@@ -151,9 +151,9 @@ The thresholds are placeholders to tune. The structure stays fixed.
 
 Horkos is built for the **PayPal sandbox**. No real money moves anywhere in this project.
 
-- **Escrow:** Horkos tracks the hold in its own ledger (integer cents), so every state change is recorded and auditable.
-- **Simulated in this build:** funding, payouts and refunds are recorded as simulated entries. The app does not call PayPal for them yet.
-- **Tested against PayPal's sandbox:** authorize, capture and void, in a standalone script (a hold was placed, then captured or voided). Seller payouts and real refunds are not tested yet.
+- **Funding and hold:** in sandbox mode, an approved payment is funded through PayPal. The buyer approves it on PayPal's sandbox page, and PayPal holds the funds. TODO: confirm the exact PayPal calls with the backend (authorize or order, capture, void, refund).
+- **Payouts:** in the demo, every seller payout goes to one sandbox account.
+- **Simulated mode:** with funding switched off, the app records simulated entries and does not call PayPal.
 
 
 
