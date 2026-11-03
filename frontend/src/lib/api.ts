@@ -259,7 +259,7 @@ export function subscribeToEvents(
   return () => source.close();
 }
 
-// ASSUMED endpoint: GET /jobs?seller_id=...&status=awaiting_work (not confirmed with the backend yet)
+
 export async function getJobs(sellerId: string): Promise<ListResponse<Job>> {
   if (USE_MOCKS) {
     await wait(300);
@@ -292,9 +292,7 @@ export async function getJobs(sellerId: string): Promise<ListResponse<Job>> {
     const items = [base, other].filter((j) => j.seller_id === sellerId);
     return { items, total: items.length };
   }
-  return request<ListResponse<Job>>(
-    `/jobs?seller_id=${encodeURIComponent(sellerId)}&status=awaiting_work`
-  );
+    return request<ListResponse<Job>>(`/jobs?status=awaiting_work`);
 }
 
 // POST /payments/{id}/funding/confirm. Call it when the buyer returns from PayPal.
