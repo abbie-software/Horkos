@@ -224,7 +224,10 @@ class PayPalFunder:
 
         for _ in range(PAYOUT_POLL_TRIES):
             self._sleep(PAYOUT_POLL_SECONDS)
-            details = http.get(f"{BASE_URL}/v1/payments/payouts/{batch_id}", headers=headers)
+            try:
+                details = http.get(f"{BASE_URL}/v1/payments/payouts/{batch_id}", headers=headers)
+            except httpx.HTTPError:
+                continue  # the payout already exists, so a dropped status check must not lose its id
             if details.status_code >= 300:
                 continue
             data = details.json()
