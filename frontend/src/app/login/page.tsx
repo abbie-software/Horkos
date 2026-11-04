@@ -25,7 +25,7 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (ready && user) router.replace(destination());
+    if (ready && user) router.replace(destination(user.role));
   }, [ready, user, router]);
 
   async function submit(e: FormEvent) {

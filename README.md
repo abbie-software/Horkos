@@ -45,7 +45,7 @@ Horkos sits between an AI agent and PayPal. It does four things:
 
 1. **Enforces your rules.** You write your spending rules (your *oath*) in plain English. Horkos turns them into a policy it checks on every payment.
 2. **Guards every payment.** A policy engine plus an AI Auditor review each proposed payment and answer **Approve**, **Block** or **Ask**, always with a plain-English reason.
-3. **Holds the money until work is proven.** Funds are held in escrow. Automated tests and an AI Verifier check the delivered work. Pass, and the seller is paid. Fail, and you are refunded.
+3. **Holds the money until work is proven.** Funds are held in escrow. Automated tests running in a sandbox check the delivered work. Pass, and the seller is paid. Fail, and you are refunded.
 4. **Lets trust be earned.** New sellers get small limits and need approval. Sellers with a proven record get higher limits and are paid automatically. A failure tightens limits immediately.
 
 **In one line:** agents can already spend money. Horkos makes it safe to let them.
@@ -151,10 +151,12 @@ The thresholds are placeholders to tune. The structure stays fixed.
 
 Horkos is built for the **PayPal sandbox**. No real money moves anywhere in this project.
 
-- **Funding and hold:** in sandbox mode, an approved payment is funded through PayPal. The buyer approves it on PayPal's sandbox page, and PayPal holds the funds. TODO: confirm the exact PayPal calls with the backend (authorize or order, capture, void, refund).
-- **Payouts:** in the demo, every seller payout goes to one sandbox account.
-- **Simulated mode:** with funding switched off, the app records simulated entries and does not call PayPal.
-
+- **Hold:** Orders v2 `create_order` with intent AUTHORIZE. The buyer approves on PayPal's sandbox page, then `funding/confirm` calls `authorize_order`.
+- **Pass:** `capture_authorized_payment`, then a seller payout through the Payouts REST API (direct HTTPS with an OAuth token, not the SDK).
+- **Fail:** `void_payment` if the hold is still open, or `refund_captured_payment` if it was already captured.
+- **Payout check:** the server checks the payout batch up to 5 times, 3 seconds apart. A failed, denied, blocked, returned, reversed or refunded item counts as a failure. If it is still unresolved after about 15 seconds, it counts as paid.
+- **Not used:** delayed disbursement, a PayPal platform feature that needs partner onboarding.
+- **Sandbox mode:** set `PAYPAL_FUNDING=sandbox` to fund payments for real on the PayPal sandbox. The default is simulated, so the app runs without PayPal keys. In the demo, all seller payouts go to one sandbox account.
 
 
 ## How we use AI
