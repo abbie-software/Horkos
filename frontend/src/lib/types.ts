@@ -144,6 +144,7 @@ export interface Job {
   payment_id: string;
   acceptance_tests: string[]; // plain-English description of what must pass
   created_at: string;
+  amount_cents?: number | null;
 }
 
 export interface TestResult {
