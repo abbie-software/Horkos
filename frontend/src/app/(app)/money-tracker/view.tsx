@@ -30,6 +30,7 @@ export default function MoneyTrackerPage() {
   const [deciding, setDeciding] = useState(false);
   const [starting, setStarting] = useState(false);
   const detailRef = useRef<HTMLDivElement>(null);
+  const [cancelled, setCancelled] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -45,7 +46,11 @@ export default function MoneyTrackerPage() {
         const first =
           paymentRes.items.find((p) => p.status === "awaiting_user") ??
           paymentRes.items[0];
-        setSelectedId(first ? first.id : null);
+                const params = new URLSearchParams(window.location.search);
+        const wanted = params.get("payment");
+        const target = paymentRes.items.find((p) => p.id === wanted) ?? first;
+        setSelectedId(target ? target.id : null);
+        if (params.get("cancelled") === "1") setCancelled(true);
       } catch (e) {
         if (!cancelled) setError(errorText(e));
       } finally {
@@ -117,6 +122,11 @@ export default function MoneyTrackerPage() {
         >
           {error}
         </div>
+      )}
+      {cancelled && (
+        <p role="status" className="mb-4 rounded-lg bg-ask/20 p-3 text-sm">
+          Funding was cancelled on PayPal. Press Fund this payment to try again.
+        </p>
       )}
 
       <NewJobBar sellers={sellers} starting={starting} onStart={handleStart} />
