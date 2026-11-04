@@ -190,6 +190,31 @@ export default function PaymentDetail({
         </ul>
       </section>
 
+            {(payment.paypal.funding_ref || payment.paypal.payout_ref || payment.paypal.refund_ref) && (
+        <section>
+          <h3 className="mb-2 text-sm font-semibold">PayPal</h3>
+          <dl className="space-y-1 text-sm">
+            {([
+              [payment.paypal.funding_ref?.startsWith("SIM-") ? "Simulated funding" : "PayPal authorization", payment.paypal.funding_ref],
+              ["Payout", payment.paypal.payout_ref],
+              ["Refund", payment.paypal.refund_ref],
+            ] as [string, string | null | undefined][]).map(([label, value]) =>
+              value ? (
+                <div key={label} className="flex justify-between gap-4">
+                  <dt className="text-muted">{label}</dt>
+                  <dd className="break-all text-right font-mono text-xs">{value}</dd>
+                </div>
+              ) : null
+            )}
+          </dl>
+          {payment.status === "held" && payment.paypal.funding_ref && !payment.paypal.funding_ref.startsWith("SIM-") && (
+            <p className="mt-2 text-xs text-muted">
+              PayPal is holding the funds until the seller’s work is checked.
+            </p>
+          )}
+        </section>
+      )}
+
       {/* Approve / Reject (only when the Guard asked you) */}
       {canDecide && (
         <div className="flex flex-col gap-3 sm:flex-row">

@@ -10,9 +10,10 @@ const DEMO = { email: "amara@example.com", password: "demo-password" };
 const FIELD =
   "w-full rounded-lg border border-border bg-card px-4 py-2.5 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-accent/30";
 
-function destination() {
+function destination(role?: string) {
   const next = new URLSearchParams(window.location.search).get("next");
-  return next && next.startsWith("/") && !next.startsWith("//") ? next : "/money-tracker";
+  if (next && next.startsWith("/") && !next.startsWith("//")) return next;
+  return role === "seller" ? "/seller" : "/money-tracker";
 }
 
 export default function LoginPage() {

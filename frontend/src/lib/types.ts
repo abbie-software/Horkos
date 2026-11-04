@@ -61,6 +61,8 @@ export interface User {
   id: string;
   name: string;
   email: string;
+  role: "buyer" | "seller";
+  seller_id: string | null;
 }
 
 export interface Policy {
