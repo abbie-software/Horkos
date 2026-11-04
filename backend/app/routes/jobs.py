@@ -70,7 +70,7 @@ def create_job(
     db.commit()
     seller = db.get(Seller, job.seller_id)
     return JobCreated(
-        job=job_to_out(job, seller, payment.id),
+        job=job_to_out(job, seller, payment.id, payment.amount_cents),
         payment=load_payment_out(db, payment),
     )
 
@@ -97,7 +97,14 @@ def list_jobs(
         if seller_id is not None and seller_public_id(seller) != seller_id:
             continue
         payment = payment_for_job(db, job.id)
-        items.append(job_to_out(job, seller, payment.id if payment else None))
+        items.append(
+            job_to_out(
+                job,
+                seller,
+                payment.id if payment else None,
+                payment.amount_cents if payment else None,
+            )
+        )
     return JobList(items=items, total=len(items))
 
 

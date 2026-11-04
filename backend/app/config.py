@@ -14,7 +14,7 @@ class Settings(BaseSettings):
     jwt_secret: str = ""
     frontend_origin: str = "http://localhost:3000"
     paypal_funding: str = "simulated"  # simulated or sandbox
-    paypal_return_url: str = "http://localhost:3000/money-tracker"
+    paypal_return_url: str = "http://localhost:3000/funding/return"
     paypal_cancel_url: str = "http://localhost:3000/money-tracker"
     paypal_payout_email: str = ""
     demo_controls: bool = True

@@ -93,7 +93,9 @@ def load_payment_out(db: Session, payment: Payment) -> PaymentOut:
     return payment_to_out(payment, seller, list(events))
 
 
-def job_to_out(job: Job, seller: Seller, payment_id: int | None) -> JobOut:
+def job_to_out(
+    job: Job, seller: Seller, payment_id: int | None, amount_cents: int | None = None
+) -> JobOut:
     return JobOut(
         id=f"job_{job.id}",
         request_text=job.request_text,
@@ -101,6 +103,7 @@ def job_to_out(job: Job, seller: Seller, payment_id: int | None) -> JobOut:
         status=job.status,
         seller_id=seller_public_id(seller),
         payment_id=f"pay_{payment_id}" if payment_id else None,
+        amount_cents=amount_cents,
         acceptance_tests=json.loads(job.acceptance_tests_json),
         created_at=as_utc(job.created_at),
     )
