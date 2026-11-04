@@ -8,7 +8,8 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.errors import ApiError
 from app.models import Seller, User
-from app.schemas.auth import LoginIn, LoginOut, UserOut
+from app.schemas.auth import LoginIn, LoginOut, SignupIn, UserOut
+from app.services.accounts import create_account
 from app.services.passwords import dummy_hash, verify_password
 from app.services.tokens import issue_token
 from app.services.views import seller_public_id
@@ -43,4 +44,11 @@ def login(body: LoginIn, db: DbSession):
     stored = user.password_hash if user is not None else dummy_hash()
     if not verify_password(body.password, stored) or user is None:
         raise ApiError(401, "unauthorized", "Wrong email or password.")
+    return LoginOut(access_token=issue_token(user.id), user=user_out(db, user))
+
+@router.post("/auth/signup", response_model=LoginOut, status_code=201)
+def signup(body: SignupIn, db: DbSession):
+    """Make an account and sign it in straight away. Same answer as login."""
+    user = create_account(db, body)
+    db.commit()
     return LoginOut(access_token=issue_token(user.id), user=user_out(db, user))

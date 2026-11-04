@@ -28,6 +28,7 @@ class JobOut(BaseModel):
     status: JobStatus
     seller_id: str
     payment_id: str | None
+    amount_cents: int | None = None
     acceptance_tests: list[str]
     created_at: datetime
 
