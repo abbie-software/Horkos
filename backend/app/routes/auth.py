@@ -50,5 +50,7 @@ def login(body: LoginIn, db: DbSession):
 def signup(body: SignupIn, db: DbSession):
     """Make an account and sign it in straight away. Same answer as login."""
     user = create_account(db, body)
+    # Make the token first. If the server has no usable JWT_SECRET, this raises and nothing is saved.
+    token = issue_token(user.id)
     db.commit()
-    return LoginOut(access_token=issue_token(user.id), user=user_out(db, user))
+    return LoginOut(access_token=token, user=user_out(db, user))

@@ -135,3 +135,11 @@ def test_bad_input_is_refused(api, changes):
     response = sign_up(api, **changes)
     assert response.status_code == 422
     assert response.json()["error"]["code"] == "validation_error"
+
+def test_a_sign_up_that_cannot_make_a_token_saves_nothing(api, monkeypatch):
+    monkeypatch.setattr(settings, "jwt_secret", "")
+    client = TestClient(app, raise_server_exceptions=False)
+    assert client.post("/auth/signup", json=GOOD).status_code == 500
+    monkeypatch.setattr(settings, "jwt_secret", SECRET)
+    login = {"email": "wanjiru@example.com", "password": "a-good-password"}
+    assert api.client.post("/auth/login", json=login).status_code == 401
