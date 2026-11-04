@@ -25,7 +25,7 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (ready && user) router.replace(destination());
+    if (ready && user) router.replace(destination(user.role));
   }, [ready, user, router]);
 
   async function submit(e: FormEvent) {
@@ -110,8 +110,13 @@ export default function LoginPage() {
             </button>
             . It runs on the PayPal sandbox.
           </p>
-          <p>New here? Sign-up is coming soon.</p>
           <p>
+            New here?{" "}
+            <Link href="/signup" className="font-semibold text-foreground underline underline-offset-4">
+              Create an account
+            </Link>
+          </p>
+                    <p>
             Are you a seller?{" "}
             <Link href="/seller" className="font-semibold text-foreground underline underline-offset-4">
               Choose your seller

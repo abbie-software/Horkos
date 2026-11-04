@@ -87,7 +87,7 @@ export default function SettingsPage() {
           <div>
             <h2 className="font-serif text-lg font-semibold">Demo data</h2>
             <p className="text-sm text-muted" aria-live="polite">
-              {note ?? "Return the demo to its starting state."}
+              {note ?? "Return the demo to its starting state. Accounts made through sign-up are removed."}
             </p>
           </div>
           <button

@@ -187,6 +187,7 @@ function Workspace({ sellerId, onSwitch, actionLabel }: { sellerId: string; onSw
               <h2 className="font-serif text-xl font-semibold sm:text-2xl">
                 {job.request_text}
               </h2>
+              {job.amount_cents != null && <p className="text-sm">You will be paid {formatUSD(job.amount_cents)} if your code passes.</p>}
 
               <div>
                 <h3 className="text-sm font-semibold">Your code must pass these tests</h3>

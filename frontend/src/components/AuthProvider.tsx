@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { login, setUnauthorizedHandler } from "@/lib/api";
+import { login, setUnauthorizedHandler, signup, type SignupBody } from "@/lib/api";
 import { clearSession, loadSession, saveSession } from "@/lib/session";
 import type { User } from "@/lib/types";
 
@@ -10,6 +10,7 @@ interface AuthValue {
   ready: boolean;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => void;
+  signUp: (body: SignupBody) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthValue | null>(null);
@@ -37,9 +38,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(result.user);
   }, []);
 
+  const signUp = useCallback(async (body: SignupBody) => {
+    const result = await signup(body);
+    saveSession(result.access_token, result.user);
+    setUser(result.user);
+  }, []);
+
   const value = useMemo(
-    () => ({ user, ready, signIn, signOut }),
-    [user, ready, signIn, signOut]
+    () => ({ user, ready, signIn, signOut, signUp }),
+    [user, ready, signIn, signOut, signUp]
   );
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

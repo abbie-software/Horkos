@@ -309,3 +309,30 @@ export async function confirmFunding(id: string): Promise<Payment> {
   }
   return request<Payment>(`/payments/${id}/funding/confirm`, { method: "POST" });
 }
+
+export interface SignupBody {
+  name: string;
+  email: string;
+  password: string;
+  role?: "buyer" | "seller";
+  paypal_email?: string;
+}
+
+export async function signup(body: SignupBody): Promise<LoginResponse> {
+  if (USE_MOCKS) {
+    await wait(500);
+    const role = body.role ?? "buyer";
+    setToken("mock-token");
+    return {
+      access_token: "mock-token",
+      token_type: "bearer",
+      user: { ...mockUser, name: body.name, email: body.email, role, seller_id: role === "seller" ? "sel_new" : null },
+    };
+  }
+  const result = await request<LoginResponse>("/auth/signup", {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+  setToken(result.access_token);
+  return result;
+}
