@@ -141,3 +141,11 @@ def test_the_demo_reset_keeps_the_seller_logins(api):
 
 def test_the_reset_clears_users_before_sellers():
     assert CLEARED_IN_ORDER.index(User) < CLEARED_IN_ORDER.index(Seller)
+
+
+def test_a_job_shows_the_amount_to_be_paid(api):
+    kip = headers_for(api, "kip@example.com")
+    amara = headers_for(api, "amara@example.com")
+    item = api.client.get("/jobs", headers=kip).json()["items"][0]
+    payment = api.client.get(f"/payments/{item['payment_id']}", headers=amara).json()
+    assert item["amount_cents"] == payment["amount_cents"] > 0

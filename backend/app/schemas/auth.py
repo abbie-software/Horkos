@@ -7,6 +7,12 @@ class LoginIn(BaseModel):
     email: str = Field(min_length=1, max_length=255)
     password: str = Field(min_length=1, max_length=200)
 
+class SignupIn(BaseModel):
+    name: str = Field(min_length=1, max_length=120)
+    email: str = Field(min_length=1, max_length=255)
+    password: str = Field(min_length=1, max_length=200)
+    role: Literal["buyer", "seller"] = "buyer"
+    paypal_email: str | None = Field(default=None, max_length=255)
 
 class UserOut(BaseModel):
     id: str
