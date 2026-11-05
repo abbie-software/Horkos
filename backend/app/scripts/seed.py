@@ -4,6 +4,7 @@ from datetime import datetime
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.config import settings
 from app.database import SessionLocal
 from app.models import (
     AuditEntry,
@@ -31,10 +32,19 @@ from app.services.passwords import cached_hash
 def ts(value: str) -> datetime:
     return datetime.fromisoformat(value)
 
+def seller_email_overrides() -> dict[str, str]:
+    """Real sandbox emails from SELLER_PAYPAL_EMAILS, keyed by seller slug."""
+    overrides = {}
+    for pair in settings.seller_paypal_emails.split(","):
+        slug, _, email = pair.partition("=")
+        if slug.strip() and email.strip():
+            overrides[slug.strip()] = email.strip().lower()
+    return overrides
 
 def seed_demo_data(db: Session) -> list[str]:
     """Add whatever demo data is missing. Safe to run more than once."""
     added: list[str] = []
+    overrides = seller_email_overrides()
 
     user = db.scalar(select(User).where(User.email == DEMO_USER["email"]))
     if user is None:
@@ -50,6 +60,7 @@ def seed_demo_data(db: Session) -> list[str]:
         save_oath(db, user.id, DEMO_OATH)
         added.append("demo oath")
 
+
     sellers: dict[str, Seller] = {}
     for data in SELLERS:
         seller = db.scalar(select(Seller).where(Seller.slug == data["slug"]))
@@ -58,7 +69,7 @@ def seed_demo_data(db: Session) -> list[str]:
             seller = Seller(
                 slug=data["slug"],
                 name=data["name"],
-                paypal_email=data["paypal_email"],
+                paypal_email=overrides.get(data["slug"], data["paypal_email"]),
                 trust_score=data["trust_score"],
                 limit_cents=data["limit_cents"],
                 jobs_completed=data["jobs_completed"],
@@ -68,6 +79,9 @@ def seed_demo_data(db: Session) -> list[str]:
             db.add(seller)
             db.flush()
             added.append(f"seller {data['name']}")
+        elif data["slug"] in overrides and seller.paypal_email != overrides[data["slug"]]:
+            seller.paypal_email = overrides[data["slug"]]
+            added.append(f"PayPal email for {data['name']}")
         sellers[data["slug"]] = seller
     for login in SELLER_LOGINS:
         if db.scalar(select(User).where(User.email == login["email"])) is None:
