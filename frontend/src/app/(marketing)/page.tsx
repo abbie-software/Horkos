@@ -82,6 +82,55 @@ export default function Landing() {
           </motion.div>
         </section>
 
+        <section aria-labelledby="impact-title">
+          <div className="mx-auto grid max-w-6xl gap-12 px-6 py-24 sm:py-32 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:gap-20">
+            <div className="max-w-xl">
+              <h2 id="impact-title" className="font-serif text-5xl leading-none tracking-tight sm:text-7xl">
+                Impact starts here.
+              </h2>
+              <p className="mt-8 max-w-lg text-lg leading-relaxed text-muted">
+                As AI agents take on more buying decisions, people need control
+                over what gets paid and confidence that the work was delivered.
+                Horkos brings clear rules and proof of work into the payment flow.
+              </p>
+            </div>
+
+            <div className="grid gap-10 sm:grid-cols-2 sm:gap-10 sm:pl-2 lg:gap-12 lg:pl-3">
+              <article className="flex flex-col">
+                <p className="font-serif text-6xl leading-none tracking-tight text-brand xl:text-7xl">$12.5B+</p>
+                <p className="mt-5 max-w-xs text-base leading-relaxed text-muted">
+                  in consumer-reported U.S. fraud losses in 2024. Online shopping
+                  issues were the second-most reported fraud category.
+                </p>
+                <a
+                  href="https://www.ftc.gov/news-events/news/press-releases/2025/03/new-ftc-data-show-big-jump-reported-losses-fraud-125-billion-2024"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-5 w-fit text-sm font-medium underline underline-offset-4"
+                >
+                  FTC, 2024 data
+                </a>
+              </article>
+
+              <article className="flex flex-col">
+                <p className="font-serif text-6xl leading-none tracking-tight text-brand xl:text-7xl">1 in 3</p>
+                <p className="mt-5 max-w-xs text-base leading-relaxed text-muted">
+                  online shoppers across the U.S., Australia and New Zealand
+                  expect to use AI shopping assistants regularly.
+                </p>
+                <a
+                  href="https://corporate.visa.com/en/products/intelligent-commerce/earning-trust-report.html"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-5 w-fit text-sm font-medium underline underline-offset-4"
+                >
+                  Visa, 2025 consumer research
+                </a>
+              </article>
+            </div>
+          </div>
+        </section>
+
         <section id="oath" ref={storyRef} className="relative h-[300vh]">
           <div className="sticky top-0 flex h-screen items-center">
             <div className="mx-auto grid w-full max-w-6xl items-center gap-8 px-6 lg:grid-cols-2 lg:gap-16">
