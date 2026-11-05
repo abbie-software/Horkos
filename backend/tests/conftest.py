@@ -5,6 +5,7 @@ from fastapi import Depends
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.config import settings
 from app.database import get_db
 from app.deps import check_stream_token, get_current_user
 from app.errors import ApiError
@@ -35,3 +36,8 @@ def log_in_as_the_demo_user(request):
     yield
     app.dependency_overrides.pop(get_current_user, None)
     app.dependency_overrides.pop(check_stream_token, None)
+
+@pytest.fixture(autouse=True)
+def no_local_seller_emails(monkeypatch):
+    """A developer's own SELLER_PAYPAL_EMAILS in .env must not change what the tests expect."""
+    monkeypatch.setattr(settings, "seller_paypal_emails", "")

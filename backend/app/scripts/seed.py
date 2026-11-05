@@ -3,6 +3,7 @@ from datetime import datetime
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
+
 from app.config import settings
 from app.database import SessionLocal
 from app.models import (
@@ -60,18 +61,11 @@ def seed_demo_data(db: Session) -> list[str]:
         added.append("demo oath")
 
 
-    dict[str, Seller] = {}
-
     sellers: dict[str, Seller] = {}
     for data in SELLERS:
         seller = db.scalar(select(Seller).where(Seller.slug == data["slug"]))
         if seller is None:
-        
-             last_activity = data["last_activity_at"]
-        elif data["slug"] in overrides and seller.paypal_email != overrides[data["slug"]]:
-            seller.paypal_email = overrides[data["slug"]]
-            added.append(f"PayPal email for {data['name']}")
-            
+            last_activity = data["last_activity_at"]
             seller = Seller(
                 slug=data["slug"],
                 name=data["name"],
@@ -85,6 +79,9 @@ def seed_demo_data(db: Session) -> list[str]:
             db.add(seller)
             db.flush()
             added.append(f"seller {data['name']}")
+        elif data["slug"] in overrides and seller.paypal_email != overrides[data["slug"]]:
+            seller.paypal_email = overrides[data["slug"]]
+            added.append(f"PayPal email for {data['name']}")
         sellers[data["slug"]] = seller
     for login in SELLER_LOGINS:
         if db.scalar(select(User).where(User.email == login["email"])) is None:
