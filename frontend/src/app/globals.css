@@ -11,15 +11,17 @@
   --muted: #5b6478;
   --border: #e3ddcc;
 
-  --sidebar: #0b1224;
-  --sidebar-active: #141e38;
-  --sidebar-foreground: #e9e5d8;
-  --sidebar-muted: #8f98ad;
+  --sidebar: #efebe1;
+  --sidebar-active: #e3ddcc;
+  --sidebar-foreground: #0b1224;
+  --sidebar-muted: #5b6478;
 
   --accent: #b8893b;
   --approve: #1f9d6b;
   --block: #d64550;
   --ask: #e8a33d;
+  --brand: #5b0a0e; 
+  --brand-foreground: #ffffff;
 }
 
 /* ---------- Dark mode ---------- */
@@ -31,6 +33,11 @@
   --border: #263459;
 
   --sidebar: #070c1a;
+  --sidebar-active: #141e38;
+  --sidebar-foreground: #e9e5d8;
+  --sidebar-muted: #8f98ad;
+  --brand: #e3a0a6; 
+  --brand-foreground: #2a0709;
 }
 
 /* Makes the colours and fonts available as Tailwind classes */
@@ -48,13 +55,43 @@
   --color-approve: var(--approve);
   --color-block: var(--block);
   --color-ask: var(--ask);
+  --color-brand: var(--brand); 
+  --color-brand-foreground: var(--brand-foreground);
 
-  --font-sans: var(--font-inter);
-  --font-serif: var(--font-source-serif);
+  --font-sans: var(--font-instrument);
+  --font-serif: var(--font-newsreader);
   --font-mono: var(--font-jetbrains-mono);
+  
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
 }
+@keyframes feed-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.feed-in {
+  animation: feed-in 0.25s ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .feed-in {
+    animation: none;
+  }
+}
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: none; }
+}
+.rise { animation: rise 0.6s cubic-bezier(0.23, 1, 0.32, 1) both; }
+@media (prefers-reduced-motion: reduce) { .rise { animation: none; } }

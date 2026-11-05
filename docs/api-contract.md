@@ -30,10 +30,10 @@ Every error uses the same shape:
 | HTTP | `code` | When |
 |---|---|---|
 | 401 | `unauthorized` | Missing or bad token |
-| 404 | `not_found` | Unknown ID |
-| 409 | `invalid_state` | Action not allowed in the current status |
+| 404 | `not_found` | Unknown ID, including an unknown `seller_id` on `POST /jobs` |
+| 409 | `invalid_state` | Action not allowed in the current state, for example a payment already decided, or `POST /jobs` when the user has no saved oath |
 | 422 | `validation_error` | Bad input |
-| 500 | `server_error` | Anything else |
+| 500 | `server_error` | Anything else, including a Buyer Agent failure |
 
 > FastAPI returns its own `{"detail": [...]}` shape for validation errors by default. Add an exception handler so they use the shape above.
 
@@ -57,6 +57,10 @@ held -> verified | refunded
 verified -> released
 ```
 
+If the Guard errors, times out or is unsure, the payment goes to `awaiting_user` (Ask). It is never approved automatically.
+
+**Guard order:** hard rules first, then high risk (block), then the ask rules, then approve.
+
 **Seller tier:** `new`, `building`, `trusted`, `restricted`
 
 **Hard rule codes** (set in `decision.hard_rule` when a hard rule decided the outcome, otherwise `null`):
@@ -64,12 +68,15 @@ verified -> released
 
 **Signal codes** (every decision lists all six, triggered or not):
 `intent_mismatch`, `recipient_changed`, `edge_of_limit`, `velocity`, `unproven_seller`, `pressure_language`
+`recipient_changed` also covers a recipient the system does not recognise. A change in the middle of a job is a hard block (`hard_rule: recipient_changed`).
 
 **Attack types:** `recipient_change`, `over_limit`, `edge_of_limit`, `rapid_retries`, `pressure_language`, `bad_work`
 
 **Actors** (audit trail): `user`, `buyer_agent`, `guard`, `verifier`, `system`
 
 **Job status:** `open`, `awaiting_work`, `verifying`, `completed`, `failed`, `cancelled`
+
+**Job category:** `coding`, `writing`, `design`, `data`, `other`. The Buyer Agent must pick one of these five. The oath's `allowed_categories` and `blocked_categories` are free text (lowercased) compared with the job's category. A job is blocked (`excluded_category`) if its category is on the blocked list, or if the oath has an allowed list and the category is not on it.
 
 ---
 
@@ -80,6 +87,7 @@ verified -> released
 | Login | `POST /auth/login` | Demo login |
 | Oath | `GET /oath`, `PUT /oath` | Read and save the user's rules |
 | Start a job | `POST /jobs` | User makes a request; the Buyer Agent proposes a payment |
+| Jobs | `GET /jobs?status=` | List jobs visible to the authenticated user |
 | Money Tracker | `GET /payments`, `GET /payments/{id}` | List payments, and one payment with its history |
 | Ask pop-up | `POST /payments/{id}/decision` | User approves or rejects an "ask" |
 | Seller page | `POST /jobs/{id}/submission` | Seller hands in work |
@@ -101,9 +109,16 @@ Response `200`:
 {
   "access_token": "eyJhbGciOi...",
   "token_type": "bearer",
-  "user": { "id": "usr_amara", "name": "Amara", "email": "amara@example.com" }
+  "user": {
+    "id": "usr_amara",
+    "name": "Amara",
+    "email": "amara@example.com",
+    "role": "buyer",
+    "seller_id": null
+  }
 }
 ```
+`user.role` is `"buyer"` or `"seller"`. `user.seller_id` is a string for a seller account, or `null` for a buyer.
 
 ---
 
@@ -134,7 +149,7 @@ Response `200` (both `GET` and `PUT`). `policy` is what Horkos understood, shown
 
 ### 3.3 `POST /jobs`
 
-The user describes what they want. The Buyer Agent picks a seller (or uses `seller_id` if given), proposes a payment, and the Guard decides. The response already contains the Guard's decision.
+The user describes what they want. The Buyer Agent picks a seller (or uses `seller_id` if given), proposes a payment, and the Guard decides. The response already contains the Guard's decision. A job takes several seconds, because two AI calls (the Buyer Agent, then the Guard) run before the response is sent.
 
 Request:
 ```json
@@ -197,11 +212,13 @@ Returned by `GET /payments`, `GET /payments/{id}` and inside `POST /jobs`.
     { "status": "proposed",      "at": "2026-10-20T10:00:00Z", "note": "Buyer Agent proposed paying $25.00 to Zed Dev." },
     { "status": "awaiting_user", "at": "2026-10-20T10:00:03Z", "note": "Guard asked the user to decide." }
   ],
-  "paypal": { "funding_ref": null, "payout_ref": null, "refund_ref": null },
+  "paypal": { "approve_url": null, "funding_ref": null, "payout_ref": null, "refund_ref": null },
   "created_at": "2026-10-20T10:00:00Z",
   "updated_at": "2026-10-20T10:00:03Z"
 }
 ```
+
+`approve_url` is nullable. It is set only while a payment is waiting for funding in sandbox mode. A payment with status `approved` and an `approve_url` needs the buyer to fund it.
 
 A blocked payment looks the same, with `status: "blocked"`, `decision.verdict: "block"` and `decision.hard_rule` set, for example:
 ```json
@@ -225,7 +242,15 @@ Request:
 `decision` is `"approve"` or `"reject"`. Response `200`: the updated Payment. Approving moves it to `approved` and then `held`; rejecting moves it to `blocked`.
 
 ---
+### 3.5a `POST /payments/{id}/funding/confirm`
 
+Called when the buyer returns from PayPal. The return page reads `?payment=pay_...`. Returns the updated Payment.
+
+| HTTP | `code` | When |
+|---|---|---|
+| 422 | `validation_error` | The buyer has not approved on PayPal |
+| 409 | `invalid_state` | The payment is not waiting for funding |
+| 500 | `server_error` | PayPal failed |
 ### 3.6 `POST /jobs/{id}/submission`
 
 The seller hands in their work. Verification takes a while, so the call returns immediately and the result arrives through the Live Feed and `GET /payments/{id}`.
@@ -370,4 +395,3 @@ The outcome arrives through the Live Feed (a `demo.attack_started` event, then `
 The frontend's `mock-data.ts` shows the same data as complete payments, audit entries and events.
 
 ---
-
