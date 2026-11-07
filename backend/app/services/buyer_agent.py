@@ -22,6 +22,10 @@ INSTRUCTIONS = (
     "use only the standard library, plain assert statements, and functions named "
     "test_something with no arguments. It must import the function under test with "
     "'from solution import <function_name>'. Keep it under 40 lines."
+    " Horkos can only check work that is a Python function a Python test can verify. "
+    "Set python_task to false if the request is for another programming language, for a "
+    "document, design or other file, or for anything a Python test cannot check; "
+    "otherwise set it to true."
 )
 
 SCHEMA = {
@@ -39,6 +43,11 @@ SCHEMA = {
             "type": "string",
             "description": "A Python test file that imports the function from solution.",
         },
+
+        "python_task": {
+            "type": "boolean",
+            "description": "True only if the work is a Python function a Python test can check.",
+        },
     },
     "required": [
         "category",
@@ -46,6 +55,7 @@ SCHEMA = {
         "description",
         "acceptance_tests",
         "test_code",
+        "python_task",
     ],
 }
 
@@ -53,6 +63,8 @@ SCHEMA = {
 class BuyerAgentError(Exception):
     """The Buyer Agent could not produce a usable proposal."""
 
+class UnsupportedWorkError(BuyerAgentError):
+    """The request is for work Horkos cannot check yet, such as code in another language."""
 
 @dataclass(frozen=True)
 class BuyerProposal:
@@ -90,7 +102,11 @@ def is_usable_test_code(code: str) -> bool:
 
 def parse_proposal(data: dict) -> BuyerProposal:
     """Check the AI's answer. Anything unusual is rejected, never repaired."""
-    problem = BuyerAgentError("The Buyer Agent could not prepare a proposal.")
+    problem = BuyerAgentError("The Buyer Agent could not prepare a proposal. Horkos can only check Python code for now, so ask for a Python function.")
+    if data.get("python_task") is False:
+        raise UnsupportedWorkError(
+            "Horkos can only check Python code for now. Ask for a Python function."
+        )
 
     category = str(data.get("category") or "").strip().lower()
     if category not in CATEGORIES:

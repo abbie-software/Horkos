@@ -17,7 +17,7 @@ from app.services.activity import (
     record_user_choice,
     record_verdict,
 )
-from app.services.buyer_agent import BuyerAgent, BuyerAgentError
+from app.services.buyer_agent import BuyerAgent, BuyerAgentError, UnsupportedWorkError
 from app.services.funding import Funder, FundingError, NotApprovedYet
 from app.services.guard import IntentChecker, safe_review
 from app.services.hard_rules import Proposal, SellerFacts, dollars
@@ -220,9 +220,12 @@ def run_job(
 
     try:
         idea = agent.propose(request_text)
+    except UnsupportedWorkError as exc:
+        raise ApiError(422, "validation_error", f"request_text: {exc}") from exc
+    
     except BuyerAgentError as exc:
         raise ApiError(500, "server_error", str(exc)) from exc
-
+    
     if seller is None:
         sellers = db.scalars(select(Seller).order_by(Seller.id)).all()
         if not sellers:
