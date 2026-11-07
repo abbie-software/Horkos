@@ -190,11 +190,11 @@ Horkos uses the **Gemini API** for its AI roles. We chose a lite model because t
 
 | Role | What it does |
 |---|---|
-| **Buyer Agent** | Turns a user's request into a payment proposal, plus acceptance tests and a test file. It returns structured JSON that the backend validates. It can only *propose*; it can never move money itself. |
+| **Buyer Agent** | Turns a user's request into a payment proposal, plus acceptance tests and a test file. It returns structured JSON that the backend validates. The current system accepts **Python coding jobs only**, because its test file and verification runner are Python-specific. It can only *propose*; it can never move money itself. |
 | **Auditor** | Checks whether the payment buys the kind of work the user asked for, and returns a structured verdict with a plain-English reason. Price is judged by the code's fixed rules, not by the AI. |
 | **Verifier** (not implemented) | No AI review for subjective work is currently provided. Verification today is automatic: submitted Python code runs against generated acceptance tests in the Docker sandbox, with no AI involved. |
 
-The AI never touches credentials or money. The backend validates everything the AI returns, and the hard rules cannot be overridden by it.
+The AI never touches credentials or money. The backend validates everything the AI returns, and the hard rules cannot be overridden by it. Requests for other programming languages or non-coding work are outside the current supported scope; the Python runner cannot verify them.
 
 ## How we used APIMatic
 
@@ -434,7 +434,7 @@ Horkos/
 
 - **Demo, not production.** Funding is simulated by default; real API calls are restricted to PayPal sandbox. There is no production PayPal support or platform escrow.
 - **Guard decisions fail safe.** Hard-coded rules run before the Auditor. AI errors or uncertainty do not override a block or silently authorize a payment.
-- **Verification is coding-only.** Seller submissions are Python code checked against acceptance tests. Other kinds of work need different verification.
+- **Current job scope is Python coding only.** Seller submissions are Python code checked against acceptance tests. Other programming languages and non-coding jobs are not supported yet because they need appropriate verification methods.
 - **Docker reduces, but does not eliminate, execution risk.** The runner disables network access and applies CPU, memory, process, filesystem, privilege and time limits. Review the runner and host configuration before using it with untrusted code outside this demo.
 - **Demo values are not production policy.** Trust changes, limits, and risk thresholds are illustrative.
 - **No managed blocklist yet.** The hard-rule check supports a blocklisted seller fact, but the app does not yet provide persistent user-managed blocklist storage or controls. Low trust after failed work is enforced.
@@ -446,7 +446,7 @@ Horkos/
 
 ## Roadmap
 
-- Add verification methods for work beyond Python coding tasks.
+- Expand the accepted job types beyond Python coding by adding suitable verification methods for other programming languages and kinds of work.
 - Add durable PayPal payout status reconciliation and operational recovery.
 - Add user-managed blocklists and seller identity controls.
 - Seller-side agents that negotiate scope and price, and trust that follows a seller across buyers.
