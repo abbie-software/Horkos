@@ -5,6 +5,15 @@
 ![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)
 ![Built for](https://img.shields.io/badge/Built%20for-PayPal%20AI%20Hackathon-0070BA.svg)
 
+**Demo video:** https://youtu.be/x5Rr3WiIR2w
+**Source code:** this repository (MIT license)  
+**Live demo:** none. Run it locally in about 10 minutes with the steps in [Getting started](#getting-started).
+
+![Money Tracker](docs/screenshots/money-tracker.png)
+![Oath](docs/screenshots/oath.png)
+![Trust Board](docs/screenshots/trust-board.png)
+
+
 > In Greek mythology, *Horkos* is the spirit of oaths, who punishes anyone who breaks a promise. Horkos the app does the same job for AI agents that spend money.
 
 ---
@@ -37,6 +46,12 @@ AI agents can already shop, hire and pay on our behalf. What is missing is **tru
 
 Today's options are blunt: a single spending cap, or a human approving every payment. Neither scales, and a numeric cap cannot tell whether a payment actually matches what you asked for.
 
+### Who it is for
+
+- **Developers and companies building agents** that buy services, data and compute on a user's behalf.
+- **Marketplaces** where agents hire freelancers or other agents and need payment to follow proof of work.
+- **Payment platforms** that want a safe way to let their customers' agents spend.
+
 ## What Horkos does
 
 Horkos sits between an AI agent and PayPal. It does four things:
@@ -56,6 +71,16 @@ Horkos sits between an AI agent and PayPal. It does four things:
 - **Autonomy is earned, not granted.** Limits grow with a track record and shrink after a failure.
 - **Every decision is explainable.** Each verdict is stored with a plain-English reason in an audit trail.
 
+### What is real today
+
+| Area | Status |
+|---|---|
+| Oath, Guard, Buyer Agent, Auditor (Gemini), trust scores, audit trail, live feed, login and sign-up | Working in this build |
+| Seller code verification in a Docker sandbox | Working (needs Docker running) |
+| PayPal sandbox funding: authorize, capture, void, payout, refund | Working when `PAYPAL_FUNDING=sandbox`. **Simulated by default**, so the app runs without PayPal keys |
+| AI Verifier for subjective work | Not built. Verification is automated tests only |
+| Managed seller blocklist | Not built. Low trust after failed work is enforced |
+
 ---
 
 ## How it works
@@ -65,7 +90,7 @@ A typical job, from Amara's point of view:
 1. **Amara writes her rules once.** For example: "Spend up to $50 per job and $100 per day. Only on coding work. Ask me before anything unusual."
 2. **Her Buyer Agent proposes a payment.** She asked for a script, and the agent finds a seller and proposes paying $20 if the delivered code passes agreed tests.
 3. **The Guard reviews it.** It checks the proposal against her rules, her original request, and the seller's trust score. Result: Approve, Block or Ask.
-4. **The money is held.** The payment is secured, and the seller can see it is real.
+4. **The money is held.** The payment is held (in PayPal's sandbox when funding is switched on, otherwise in the demo ledger).
 5. **The seller delivers.** An authenticated seller submits code, which is run against the agreed tests in an isolated Docker container.
 6. **Horkos settles the payment.** Passing tests capture the authorization and pay the seller; failing tests refund the buyer. If the runner cannot reach a verdict, no money moves and the seller can submit again.
 7. **Everything is logged.** Every step appears on the live feed and in the audit trail.
@@ -154,6 +179,7 @@ Horkos only targets the **PayPal sandbox**. Funding is **simulated by default**,
 - **Fail verification:** Horkos voids an uncaptured authorization or refunds a captured payment.
 - **Seller destinations:** The backend seeds the seller profiles and routes each payout to that seller's configured PayPal email. Set `SELLER_PAYPAL_EMAILS` to comma-separated `seller_slug=email` pairs, such as `sel_nova=nova@personal.example.com,sel_kip=kip@personal.example.com`. Leave `PAYPAL_PAYOUT_EMAIL` empty to keep these destinations separate. A non-empty `PAYPAL_PAYOUT_EMAIL` overrides the per-seller email and sends every payout to the same account. The email mappings must refer to PayPal sandbox accounts you have created; Horkos does not provision PayPal accounts.
 - **Payout status:** Horkos checks a payout batch up to five times, three seconds apart. Explicit failure states stop settlement. If PayPal has not returned a final status after the polling window, the current demo records the payout as released; verify unresolved batches in the PayPal sandbox dashboard.
+- **Not used:** delayed disbursement, a PayPal platform feature that needs partner onboarding.
 
 The app's simulated ledger and PayPal sandbox transactions are for demonstration only. They are not a production escrow or financial service.
 
@@ -164,11 +190,11 @@ Horkos uses the **Gemini API** for its AI roles. We chose a lite model because t
 
 | Role | What it does |
 |---|---|
-| **Buyer Agent** | Turns a user's request into a payment proposal, plus acceptance tests and a test file. It returns structured JSON that the backend validates. It can only *propose*; it can never move money itself. |
+| **Buyer Agent** | Turns a user's request into a payment proposal, plus acceptance tests and a test file. It returns structured JSON that the backend validates. The current system accepts **Python coding jobs only**, because its test file and verification runner are Python-specific. It can only *propose*; it can never move money itself. |
 | **Auditor** | Checks whether the payment buys the kind of work the user asked for, and returns a structured verdict with a plain-English reason. Price is judged by the code's fixed rules, not by the AI. |
 | **Verifier** (not implemented) | No AI review for subjective work is currently provided. Verification today is automatic: submitted Python code runs against generated acceptance tests in the Docker sandbox, with no AI involved. |
 
-The AI never touches credentials or money. The backend validates everything the AI returns, and the hard rules cannot be overridden by it.
+The AI never touches credentials or money. The backend validates everything the AI returns, and the hard rules cannot be overridden by it. Requests for other programming languages or non-coding work are outside the current supported scope; the Python runner cannot verify them.
 
 ## How we used APIMatic
 
@@ -188,26 +214,26 @@ The application uses the Python Server SDK for PayPal orders and payments; selle
 
 ```mermaid
 flowchart LR
-    UI["Next.js + React + TypeScript: Oath, Live Feed, Money Tracker, Trust Board, Audit Trail"] -- "REST" --> API["FastAPI backend"]
+    UI["Next.js + React + TypeScript: Landing, Oath, Live Feed, Money Tracker, Trust Board, Audit Trail, Seller, Settings"] -- "REST" --> API["FastAPI backend"]
     API -- "SSE live feed" --> UI
     API --> Guard["Guard: policy engine + AI Auditor (Gemini)"]
-    API --> DB[("PostgreSQL: ledger, trust scores, audit log")]
-    API --> PP["PayPal sandbox: fund, payout, refund"]
+    API --> DB[("SQLite: ledger, trust scores, audit log")]
+    API --> PP["PayPal sandbox: authorize, capture, void, payout, refund"]
     API --> Runner["Docker test runner: no network, time and memory limits"]
 ```
 
 | Layer | Tools |
 |---|---|
-| Frontend | Next.js, React, TypeScript |
+| Frontend | Next.js, React, TypeScript, Tailwind CSS, Motion |
 | Backend | Python 3.12, FastAPI, Pydantic, Uvicorn |
-| Data | PostgreSQL (SQLite for local development), SQLAlchemy 2, Alembic |
-| Payments | PayPal REST API (sandbox), internal ledger in integer cents |
+| Data | SQLite (PostgreSQL not tested), SQLAlchemy 2, Alembic |
+| Payments | PayPal Python Server SDK and Payouts REST API (sandbox), internal ledger in integer cents |
 | AI | Gemini API |
 | Verification | Docker (isolated test runner) |
 | Real-time | Server-Sent Events with sse-starlette |
 | Auth and security | JWT sessions (PyJWT), Pydantic Settings for secrets |
 | Quality | pytest, Ruff, GitHub |
-| Deployment (optional) | Render, Railway or Fly.io |
+| Deployment (optional) | A Linux VM with Docker (the test runner needs Docker) |
 
 ---
 
@@ -233,7 +259,7 @@ On macOS or Linux, use `cp .env.example .env`. Set the values you need:
 
 | Variable | Purpose |
 |---|---|
-| `JWT_SECRET` | Required for signing app login tokens. Set a long random value. |
+| `JWT_SECRET` | Required for signing app login tokens. Use a long random value (at least 32 characters). Generate one with `python -c "import secrets; print(secrets.token_urlsafe(48))"`. |
 | `GEMINI_API_KEY` | Google AI Studio API key used by the Buyer Agent and Auditor. |
 | `GEMINI_MODEL` | Set to `gemini-3.5-flash-lite` (the application fallback when this variable is unset). |
 | `GEMINI_THINKING_LEVEL` | Optional model setting (`low`, `medium`, or `high`) when supported. |
@@ -285,13 +311,19 @@ npm run dev
 
 Open `http://localhost:3000`. If you use another frontend origin, update `FRONTEND_ORIGIN` in the root `.env` and restart the backend.
 
-### 4. Run seller verification
+### 4. Prepare seller verification
 
-Keep Docker running. On the first submitted job, Docker pulls the `python:3.12-slim` image automatically. Horkos runs the seller's code and acceptance tests in a restricted container; no custom image build is required.
+Keep Docker running, and pull the test image once before the first submission:
+
+```powershell
+docker pull python:3.12-slim
+```
+
+Horkos runs the seller's code and acceptance tests in a restricted container built from that image; no custom image build is required. Pulling it first means the first submission is not slowed down by the download.
 
 ### Quick check
 
-- `http://localhost:3000/login` loads the frontend.
+- `http://localhost:3000` shows the landing page, and `http://localhost:3000/login` loads the sign-in screen.
 - `http://localhost:8000/health` returns `{"status":"ok", ...}`.
 - `http://localhost:8000/docs` shows the live API routes.
 - Log in with the demo buyer and confirm the Oath, Money Tracker, Trust Board, Live Feed and Audit Trail load from the backend.
@@ -310,16 +342,16 @@ The seed script creates Horkos app logins. They are separate from PayPal sandbox
 | Seller (Zed Dev) | `zed@example.com` | `demo-password` |
 | Seller (QuickPay Dev) | `quick@example.com` | `demo-password` |
 
-These are demo-only credentials. In PayPal sandbox mode, use a buyer sandbox account to approve the order on PayPal. The PayPal buyer and seller accounts are created and managed separately in the PayPal Developer Dashboard; their passwords are not stored in this repository. Configure each seller's PayPal recipient email as described above.
+These are demo-only credentials. You can also create your own buyer or seller account at `/signup` (sellers need a PayPal sandbox email). In PayPal sandbox mode, use a buyer sandbox account to approve the order on PayPal. The PayPal buyer and seller accounts are created and managed separately in the PayPal Developer Dashboard; their passwords are not stored in this repository. Configure each seller's PayPal recipient email as described above.
 
 ### Suggested walkthrough
 
-1. Log in as Amara and review the saved oath.
-2. Create a small coding job. A new seller or a request above the seller's current limit may require buyer approval.
-3. If using simulated funding, the payment is held in the demo ledger. If using PayPal sandbox funding, approve the order on PayPal and return to Horkos.
-4. Log in as the selected seller and submit Python code for a job waiting for work.
+1. Log in as Amara and review the saved oath. Open the **Live Feed** in a second browser window. It shows events as they happen, so keep it open while you work.
+2. Create a small coding job on the **Money Tracker**. A new seller or a request above the seller's current limit asks for your approval.
+3. If using simulated funding, the payment is held in the demo ledger. If using PayPal sandbox funding, press **Fund this payment**, approve the order on PayPal and return to Horkos.
+4. Log in as the seller for the job you just created and submit Python code for it. The submitted code must define the function named in the job's first acceptance test.
 5. Watch verification and settlement in the Money Tracker, Live Feed and Audit Trail. Passing tests raise seller trust; failed tests trigger a refund and lower trust.
-6. Use the Red Team controls to exercise guard scenarios, then reset the demo data when finished.
+6. Use the Red Team controls to exercise guard scenarios, then reset the demo data when finished. Resetting restores the seeded accounts and removes accounts created through sign-up.
 
 ### Red Team scenarios
 
@@ -375,6 +407,7 @@ Horkos/
 │   │   └── main.py
 │   ├── tests/                  # Backend unit and API flow tests
 │   ├── alembic.ini
+│   ├── pytest.ini              # Test configuration
 │   └── requirements.txt
 ├── docs/
 │   ├── screenshots/
@@ -397,25 +430,26 @@ Horkos/
 
 ---
 
-The backend also contains `pytest.ini` for test configuration. The `docs/` directory includes `api-contract.md` alongside the demo story, APIMatic log, and screenshots.
-
 ## Safety and limitations
 
 - **Demo, not production.** Funding is simulated by default; real API calls are restricted to PayPal sandbox. There is no production PayPal support or platform escrow.
 - **Guard decisions fail safe.** Hard-coded rules run before the Auditor. AI errors or uncertainty do not override a block or silently authorize a payment.
-- **Verification is coding-only.** Seller submissions are Python code checked against acceptance tests. Other kinds of work need different verification.
+- **Current job scope is Python coding only.** Seller submissions are Python code checked against acceptance tests. Other programming languages and non-coding jobs are not supported yet because they need appropriate verification methods.
 - **Docker reduces, but does not eliminate, execution risk.** The runner disables network access and applies CPU, memory, process, filesystem, privilege and time limits. Review the runner and host configuration before using it with untrusted code outside this demo.
 - **Demo values are not production policy.** Trust changes, limits, and risk thresholds are illustrative.
 - **No managed blocklist yet.** The hard-rule check supports a blocklisted seller fact, but the app does not yet provide persistent user-managed blocklist storage or controls. Low trust after failed work is enforced.
-- **Seller submissions require app authentication.** A seller-role account is restricted to jobs assigned to its seller profile; PayPal sandbox accounts are configured separately for payouts.
+- **Seller submissions require app authentication.** A seller-role account is restricted to jobs assigned to its seller profile; PayPal sandbox accounts are configured separately for payouts. Buyer accounts are not restricted in the same way in this demo.
 - **Payout reconciliation is limited.** After roughly 15 seconds of polling, a payout without a final status is currently recorded as released. Check unresolved batches in PayPal and implement durable status reconciliation before any production use.
 - **Demo controls can reset data.** Disable them with `DEMO_CONTROLS=false` outside a local demo.
+- **Public sign-up.** Anyone who can reach a running instance can create accounts, so do not expose a demo instance publicly.
+- **Local database only.** The app is tested with SQLite. PostgreSQL has not been tested.
 
 ## Roadmap
 
-- Add verification methods for work beyond Python coding tasks.
+- Expand the accepted job types beyond Python coding by adding suitable verification methods for other programming languages and kinds of work.
 - Add durable PayPal payout status reconciliation and operational recovery.
 - Add user-managed blocklists and seller identity controls.
+- Seller-side agents that negotiate scope and price, and trust that follows a seller across buyers.
 - Review the payment and sandbox-runner architecture before any production deployment.
 
 ---
@@ -427,7 +461,7 @@ The backend also contains `pytest.ini` for test configuration. The `docs/` direc
 | ABIGAIL GATHONI | Frontend and design |
 | LEVIS NGANGA | Backend, payments and AI |
 
-see `contributing.md` for how we work
+See `contributing.md` for how we work.
 
 ## Acknowledgements
 

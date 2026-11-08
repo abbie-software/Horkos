@@ -1,11 +1,14 @@
 import json
 from types import SimpleNamespace
 
+import pytest
+
 from app.services.buyer_agent import (
     CATEGORIES,
     SCHEMA,
     BuyerAgentError,
     GeminiBuyerAgent,
+    UnsupportedWorkError,
     parse_proposal,
 )
 
@@ -135,3 +138,11 @@ def test_importing_the_whole_solution_module_is_fine():
 
 def test_the_schema_asks_for_the_test_code():
     assert "test_code" in SCHEMA["required"]
+
+def test_work_in_another_language_is_refused_with_a_clear_message():
+       with pytest.raises(UnsupportedWorkError) as caught:
+           parse_proposal({**GOOD, "python_task": False})
+       assert "Python" in str(caught.value)
+
+def test_a_reply_without_the_python_flag_still_works():
+       assert parse_proposal(GOOD).category == "coding"

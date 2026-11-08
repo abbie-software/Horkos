@@ -11,7 +11,11 @@ from app.deps import get_buyer_agent, get_funder, get_intent_checker
 from app.main import app
 from app.models import Job, User
 from app.scripts.seed import seed_demo_data
-from app.services.buyer_agent import BuyerAgentError, BuyerProposal
+from app.services.buyer_agent import (
+    BuyerAgentError,
+    BuyerProposal,
+    UnsupportedWorkError,
+)
 from app.services.funding import SimulatedFunder
 from app.services.signals import IntentResult
 
@@ -255,3 +259,11 @@ def test_the_daily_cap_counts_payments_already_approved_today(world):
     assert fourth["status"] == "blocked"
     assert fourth["decision"]["hard_rule"] == "over_cap"
     assert "daily cap" in fourth["decision"]["reason"]
+def test_work_that_is_not_python_is_a_clear_422_and_creates_nothing(world):
+    world.agent.error = UnsupportedWorkError("Horkos can only check Python code for now.")
+    response = start_job(world)
+    assert response.status_code == 422
+    error = response.json()["error"]
+    assert error["code"] == "validation_error"
+    assert error["message"].startswith("request_text:")
+    assert world.client.get("/payments").json()["total"] == 6
