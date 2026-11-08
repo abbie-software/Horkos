@@ -5,7 +5,7 @@
 ![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)
 ![Built for](https://img.shields.io/badge/Built%20for-PayPal%20AI%20Hackathon-0070BA.svg)
 
-**Demo video:** TODO add the YouTube link here  
+**Demo video:** https://youtu.be/x5Rr3WiIR2w
 **Source code:** this repository (MIT license)  
 **Live demo:** none. Run it locally in about 10 minutes with the steps in [Getting started](#getting-started).
 
