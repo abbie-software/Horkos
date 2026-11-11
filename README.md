@@ -13,6 +13,12 @@
 ![Oath](docs/screenshots/oath.png)
 ![Trust Board](docs/screenshots/trust-board.png)
 
+## Screenshots
+
+![A payment blocked by a hard rule](docs/screenshots/blocked-payment.png)
+
+![Failed work: the buyer is refunded](docs/screenshots/refunded-payment.png)
+
 
 > In Greek mythology, *Horkos* is the spirit of oaths, who punishes anyone who breaks a promise. Horkos the app does the same job for AI agents that spend money.
 
